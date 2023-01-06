@@ -23,12 +23,12 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    /*private lateinit var cDao: CDAO
-    private lateinit var bstate : BatteryState*/
+    private lateinit var cDao: CDAO
+    private lateinit var bstate : BatteryState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /*val db = Room.databaseBuilder(
+        val db = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "charge_stats"
         ).build()
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         cDao = db.cDAO()
         testDB()
 
-         */
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -52,12 +52,12 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
-        /*Timer().schedule(1000){
+        Timer().schedule(1000){
             testTime()
-        }*/
+        }
     }
 
-    /*private fun testDB(){
+    private fun testDB(){
         lifecycleScope.launch(Dispatchers.IO){
             //Insert
             Log.i("MyTAG","***** Inserting 3 stats ********")
@@ -73,6 +73,6 @@ class MainActivity : AppCompatActivity() {
     }
     fun testTime(){
         bstate = BatteryState()
-        Log.i("MyTAG: ",""+bstate.getBatteryPercentage(this).toInt())
-    }*/
+        Log.i("MyTAG: ",""+bstate.getBatteryPercentage(this))
+    }
 }
