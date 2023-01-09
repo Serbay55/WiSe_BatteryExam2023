@@ -7,6 +7,12 @@ interface CDAO {
     @Insert
     suspend fun insertCharge(charge: Charge)
 
+    @Query("SELECT id FROM charge_stats WHERE dayofyear = :askedday")
+    fun getTodaysChargeStatid(askedday: Int): Int
+
+    @Insert
+    suspend fun insertLCS(lcs: LCS)
+
     @Query("SELECT * FROM charge_stats")
     fun getAllCharges(): List<Charge>
 
@@ -15,4 +21,10 @@ interface CDAO {
 
     @Delete
     suspend fun deleteCharge(charge: Charge)
+
+    @Query("SELECT lastChargeStatus FROM lastChargeStats WHERE sid = 0")
+    fun getLastCharge(): Int
+
+    @Delete
+    suspend fun deleteLastCharge(ls: LCS)
 }

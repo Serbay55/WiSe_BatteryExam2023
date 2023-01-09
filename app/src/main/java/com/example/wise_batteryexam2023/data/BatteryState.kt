@@ -12,4 +12,6 @@ class BatteryState {
         val bm = context.getSystemService(BATTERY_SERVICE) as BatteryManager
         return bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
     }
+
+
 }
