@@ -7,8 +7,11 @@ interface CDAO {
     @Insert
     suspend fun insertCharge(charge: Charge)
 
-    @Query("SELECT id FROM charge_stats WHERE dayofyear = :askedday")
-    fun getTodaysChargeStatid(askedday: Int): Int
+    @Query("SELECT id FROM charge_stats WHERE dayofyear = :askedday AND year = :askedyear")
+    fun getTodaysChargeStatid(askedday: Int, askedyear: Int): Int
+
+    @Query("SELECT chargeStep FROM charge_stats WHERE dayofyear = :askedday AND year = :askedyear")
+    fun getTodaysChargeCycles(askedday: Int, askedyear: Int): Double
 
     @Insert
     suspend fun insertLCS(lcs: LCS)
@@ -27,4 +30,13 @@ interface CDAO {
 
     @Delete
     suspend fun deleteLastCharge(ls: LCS)
+
+    @Query("SELECT chargeStep FROM charge_stats WHERE dayofyear= :dayyear AND year = :year ")
+    fun getCycles(dayyear: Int, year: Int) : Double
+
+    @Insert
+    suspend fun insertHealth(health: BH)
+
+    @Query("SELECT healthstateofbattery FROM current_health WHERE id = 0")
+    fun getCurrentHealth(): Double
 }
