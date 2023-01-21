@@ -1,5 +1,7 @@
 package com.example.wise_batteryexam2023
 
+import android.content.SharedPreferences
+import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -31,7 +33,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var hcDao: CDAO
     private lateinit var hDao: CDAO
     private lateinit var bstate : BatteryState
+    private lateinit var sh : SharedPreferences
+    private lateinit var shedit: SharedPreferences.Editor
     private var newcycle: Double = 0.0
+    var intervals = arrayOf(
+        intArrayOf(10, 0),
+        intArrayOf(20, 1),
+        intArrayOf(30, 2),
+        intArrayOf(40, 3),
+        intArrayOf(50, 4),
+        intArrayOf(60, 5),
+        intArrayOf(70, 6),
+        intArrayOf(80, 7),
+        intArrayOf(90, 8),
+        intArrayOf(95, 9),
+        intArrayOf(100, 10)
+    )
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +110,10 @@ class MainActivity : AppCompatActivity() {
             Log.i("ASYNC TIME", "TIME ELAPSED MOTHERFUCKER: $executionTime ms.")
         }
     }*/
+    private fun checkForegroundapp(){
+        val s: String = RunningApps().getCurrentForegroundRunningApp(this)
+        Log.i("FOREGROUNDAPP:: ", ""+s)
+    }
 
     private fun testDB(){
         lifecycleScope.launch(Dispatchers.IO){
@@ -111,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun setlastchargestate(){
+    private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
             val s = scDao.getLastCharge()
             if(s == 0) {
@@ -121,7 +142,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun checklastchargestate(){
+    private fun checklastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
             val lastrecordedcharge = scDao.getLastCharge()
             val currentChargeValue = getBattery()
@@ -137,37 +158,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun checkDifference(givenCharge: Int, currentCharge: Int){
+    private fun checkDifference(givenCharge: Int, currentCharge: Int){
 
-        val calc = abs(givenCharge - currentCharge)
-        if(calc in 10..19){
-            newcycle = 0.1
-        } else if(calc in 20..29){
-            newcycle = 0.2
-        } else if(calc in 30..39){
-            newcycle = 0.3
-        } else if(calc in 40..49){
-            newcycle = 0.4
-        } else if(calc in 50..59){
-            newcycle = 0.5
-        } else if(calc in 60..69){
-            newcycle = 0.6
-        } else if(calc in 70..79){
-            newcycle = 0.7
-        } else if(calc in 80..89){
-            newcycle = 0.8
-        } else if(calc in 90..94){
-            newcycle = 0.9
-        } else if(calc in 96..99){
-            newcycle = 1.0
-        } else {
-            newcycle = 0.0
+        val calc = kotlin.math.abs(givenCharge - currentCharge)
+        for (i in intervals.indices) {
+            if (calc <= intervals[i][0]) {
+                newcycle = (intervals[i][1] * 0.1)
+            }
         }
+
 
     }
 
 
-    fun batteryStatechecker(){
+    private fun batteryStatechecker(){
         CoroutineScope(Dispatchers.IO).launch {
             val getBat = async {
                 Timer().schedule(10000) {
@@ -175,58 +179,66 @@ class MainActivity : AppCompatActivity() {
                     checklastchargestate()
                     setlastchargestate()
                     batteryStatechecker()
+                    checkForegroundapp()
                 }
             }
         }
     }
 
-    fun getBattery() : Int{
+    private fun getBattery() : Int{
         bstate = BatteryState()
         Log.i("MyTAG: ",""+bstate.getBatteryPercentage(this))
         return bstate.getBatteryPercentage(this)
     }
 
-    fun getCurrentDay(): Int {
+    private fun getCurrentDay(): Int {
         val cal: Calendar = Calendar.getInstance()
         return cal.get(Calendar.DAY_OF_YEAR)
     }
-    fun getCurrentYear(): Int{
+    private fun getCurrentYear(): Int{
         val cal: Calendar = Calendar.getInstance()
         return cal.get(Calendar.YEAR)
     }
 
-    fun tCheck(): Double{
+    private fun tCheck(): Double{
         val temperature = BatteryState().batteryTemperature(this)
         var tempMult = 0.0
-        if(temperature in 20.0..25.0){
-            tempMult = 1.0
-        } else if(temperature in 25.1..30.0){
-            tempMult = 1.1
-        } else if(temperature in 30.1..35.0){
-            tempMult = 1.2
-        } else if(temperature > 35.0){
-            tempMult = 1.25
-        } else if(temperature in 15.0..19.9){
-            tempMult = 1.1
-        } else if(temperature < 15.0){
-            tempMult = 1.2
+        when {
+            temperature in 20.0..25.0 -> {
+                tempMult = 1.0
+            }
+            temperature in 25.1..30.0 -> {
+                tempMult = 1.1
+            }
+            temperature in 30.1..35.0 -> {
+                tempMult = 1.2
+            }
+            temperature > 35.0 -> {
+                tempMult = 1.25
+            }
+            temperature in 15.0..19.9 -> {
+                tempMult = 1.1
+            }
+            temperature < 15.0 -> {
+                tempMult = 1.2
+            }
         }
         return tempMult
+
+
     }
 
-    fun actionHealth(){
+    private fun actionHealth(){
         CoroutineScope(Dispatchers.IO).launch {
             val gBHS = async {
                 Timer().schedule(60000*60*6){
-                    babaninaminisikim()
+                    batteryhealthcalucation()
                 }
             }
         }
     }
 
-
-
-    fun babaninaminisikim(){
+    private fun batteryhealthcalucation(){
         lifecycleScope.launch(Dispatchers.IO){
             val cycles = cDao.getCycles(getCurrentDay(),getCurrentYear())
             hcDao.insertHealth(BH(getCurrentDay(),getCurrentYear(),hDao.getCurrentHealth() - (cycles * 0.025)))
