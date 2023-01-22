@@ -41,3 +41,21 @@ data class LH(
     var healthstateofbattery : Double
 
 )
+@Entity(tableName = "screen_on_time")
+data class ScreenOTime(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var app_package_name : String,
+    @ColumnInfo
+    var SoT : Int,
+    @ColumnInfo
+    var usedPercentage: Double
+)
+@Entity(tableName = "last_running_app")
+data class LRA(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var last_running_app: String
+)

@@ -10,6 +10,7 @@ import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.room.Dao
 import androidx.room.Room
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
@@ -32,6 +33,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scDao: CDAO
     private lateinit var hcDao: CDAO
     private lateinit var hDao: CDAO
+    private lateinit var sotDao: CDAO
+    private lateinit var lraDao: CDAO
     private lateinit var bstate : BatteryState
     private lateinit var sh : SharedPreferences
     private lateinit var shedit: SharedPreferences.Editor
@@ -69,6 +72,14 @@ class MainActivity : AppCompatActivity() {
             applicationContext,
             DB::class.java, "current_health"
         ).build()
+        val sotdb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "screen_on_time"
+        )
+        val lradb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "last_running_app"
+        )
 
 
         hDao = hdbs.cDAO()
@@ -97,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         batteryStatechecker()
         actionHealth()
         Log.i("TEST::: ", ""+ InstallTime().getInstallTime(this))
+        Log.i("TEST::: ", ""+ RunningApps().getOldestAppsAge(this))
     }
 
     /*private fun fakeApiRequest() {
@@ -166,8 +178,6 @@ class MainActivity : AppCompatActivity() {
                 newcycle = (intervals[i][1] * 0.1)
             }
         }
-
-
     }
 
 
@@ -178,8 +188,8 @@ class MainActivity : AppCompatActivity() {
                     getBattery()
                     checklastchargestate()
                     setlastchargestate()
-                    batteryStatechecker()
                     checkForegroundapp()
+                    batteryStatechecker()
                 }
             }
         }
@@ -241,7 +251,9 @@ class MainActivity : AppCompatActivity() {
     private fun batteryhealthcalucation(){
         lifecycleScope.launch(Dispatchers.IO){
             val cycles = cDao.getCycles(getCurrentDay(),getCurrentYear())
-            hcDao.insertHealth(BH(getCurrentDay(),getCurrentYear(),hDao.getCurrentHealth() - (cycles * 0.025)))
+            hcDao.insertHealth(BH(getCurrentDay(),getCurrentYear(),
+                kotlin.math.abs(hDao.getCurrentHealth() - (cycles * 0.025))
+            ))
         }
     }
 }
