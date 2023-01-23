@@ -9,11 +9,12 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.text.format.DateUtils
 import android.util.Log
+import java.util.*
 
 class RunningApps {
     fun getCurrentForegroundRunningApp(context: Context): String {
-        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val appProcesses = am.runningAppProcesses
+        var am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        var appProcesses = am.runningAppProcesses
         for (appProcessInfo in appProcesses) {
             Log.i("For all::  ",""+appProcessInfo.processName)
             if (appProcessInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
@@ -27,7 +28,7 @@ class RunningApps {
     }
 
 
-    fun getOldestAppsAge(context: Context) : String{
+    fun getOldestAppsAge(context: Context) : Date{
         var appsAge: Long = 0
         try{
             appsAge = System.currentTimeMillis()
@@ -46,7 +47,7 @@ class RunningApps {
         } catch (e: java.lang.Exception){
             e.printStackTrace()
         }
-        return DateUtils.formatElapsedTime(appsAge)
+        return Date(appsAge)
     }
 
 }

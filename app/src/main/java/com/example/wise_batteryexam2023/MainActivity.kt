@@ -1,6 +1,8 @@
 package com.example.wise_batteryexam2023
 
 import android.content.SharedPreferences
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +11,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Dao
 import androidx.room.Room
@@ -33,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scDao: CDAO
     private lateinit var hcDao: CDAO
     private lateinit var hDao: CDAO
-    private lateinit var sotDao: CDAO
+    public lateinit var sotDao: CDAO
     private lateinit var lraDao: CDAO
     private lateinit var bstate : BatteryState
     private lateinit var sh : SharedPreferences
@@ -56,6 +59,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Databasebuilder for building tables if not exists.
         val db = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "charge_stats"
@@ -75,18 +80,22 @@ class MainActivity : AppCompatActivity() {
         val sotdb = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "screen_on_time"
-        )
+        ).build()
         val lradb = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "last_running_app"
-        )
-
-
+        ).build()
+        //Dataaccessobject servicer
         hDao = hdbs.cDAO()
         cDao = db.cDAO()
         scDao = sdb.cDAO()
         hcDao = hdb.cDAO()
+        lraDao = lradb.cDAO()
+        sotDao = sotdb.cDAO()
+
         testDB()
+        sotcount()
+        Log.i("nono: ",""+getBattery())
 
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -109,6 +118,7 @@ class MainActivity : AppCompatActivity() {
         actionHealth()
         Log.i("TEST::: ", ""+ InstallTime().getInstallTime(this))
         Log.i("TEST::: ", ""+ RunningApps().getOldestAppsAge(this))
+        //Log.i("First installation date:::  ", ""+ packageinformation())
     }
 
     /*private fun fakeApiRequest() {
@@ -132,7 +142,7 @@ class MainActivity : AppCompatActivity() {
             //Insert
             Log.i("MyTAG","***** Inserting 3 stats ********")
             cDao.insertCharge(Charge(0,1.0, Calendar.DAY_OF_YEAR, Calendar.YEAR))
-            scDao.insertLCS(LCS(0,getBattery()))
+            //scDao.insertLCS(LCS(0,getBattery()))
             Log.i("MyTAG","***** Inserted 3 stats ********")
 
             //Query
@@ -141,16 +151,30 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MyTAG","id: ${x.id} charges: ${x.chargeStep} ")
                 Log.i("LCS:__:", ""+scDao.getLastCharge())
             }
+            val stats2 = scDao.getAllLastCharges()
+            for(y in stats2){
+                Log.i("finally::  ","sid: ${y.sid} lcs: ${y.lastChargeStatus}")
+            }
+            val stat3 = scDao.tester(1)
+            Log.i("Tester::  ",""+stat3)
+            val stat4 = sotDao.getAllSOT()
+            for(z in stat4){
+                Log.i("SOT:::  ","Time: ${z.time}")
+            }
         }
     }
 
+
     private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
-            val s = scDao.getLastCharge()
-            if(s == 0) {
-                //To Do deleter of selected table row
-                scDao.insertLCS(LCS(0, getBattery()))
+            var s = scDao.getLastCharge()
+            if(s == 0){
+                scDao.insertLCS(LCS(1, getBattery()))
+            } else {
+                scDao.updateLCS(LCS(1,getBattery()))
             }
+            //To Do deleter of selected table row
+
         }
     }
 
@@ -158,15 +182,27 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO){
             val lastrecordedcharge = scDao.getLastCharge()
             val currentChargeValue = getBattery()
-            if(lastrecordedcharge != null){
-                    checkDifference(lastrecordedcharge, currentChargeValue)
-                    val new_cs = cDao.getTodaysChargeCycles(getCurrentDay(),getCurrentYear()) + (newcycle * tCheck())
-                    cDao.updateCharge(Charge(cDao.getTodaysChargeStatid(getCurrentDay(),getCurrentYear()),new_cs,getCurrentDay(),getCurrentYear()))
-                    newcycle = 0.0
-            } else {
-                Log.e("ERROR: ", "No last charge ever recorded. Current charge level will be new last charge value")
+            checkDifference(lastrecordedcharge, currentChargeValue)
+            if(newcycle >= 0.1) {
+                val new_cs = cDao.getTodaysChargeCycles(
+                    getCurrentDay(),
+                    getCurrentYear()
+                ) + (newcycle * tCheck())
+                cDao.updateCharge(
+                    Charge(
+                        cDao.getTodaysChargeStatid(
+                            getCurrentDay(),
+                            getCurrentYear()
+                        ), new_cs, getCurrentDay(), getCurrentYear()
+                    )
+                )
+                newcycle = 0.0
                 setlastchargestate()
+                //TO DO:: newcycle never reaches below 0.1 cycles and therefore it always updates last recorded charge -> shouldn't happen
+            } else{
+                Log.i("Error::  ", "Discharge difference is too low")
             }
+
         }
     }
 
@@ -187,7 +223,6 @@ class MainActivity : AppCompatActivity() {
                 Timer().schedule(10000) {
                     getBattery()
                     checklastchargestate()
-                    setlastchargestate()
                     checkForegroundapp()
                     batteryStatechecker()
                 }
@@ -197,7 +232,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun getBattery() : Int{
         bstate = BatteryState()
-        Log.i("MyTAG: ",""+bstate.getBatteryPercentage(this))
         return bstate.getBatteryPercentage(this)
     }
 
@@ -256,4 +290,39 @@ class MainActivity : AppCompatActivity() {
             ))
         }
     }
+    private fun sotcount(){
+        lifecycleScope.launch(Dispatchers.IO){
+            val async = async {
+                Timer().schedule(180000){
+                    CoroutineScope(Dispatchers.IO).launch{
+                        if(sotDao.checkExistingSOT(getCurrentDay(),getCurrentYear()) == 0) {
+                            sotDao.insertScreenOnTime(
+                                ScreenOTime(
+                                    0,
+                                    getCurrentDay(),
+                                    getCurrentYear(),
+                                    3
+                                )
+                            )
+                        } else {
+                            sotDao.updateSOT(ScreenOTime(sotDao.getIDSOT(getCurrentDay(),getCurrentYear()),getCurrentDay(),getCurrentYear(),sotDao.gettimefromtoday(getCurrentYear(),getCurrentDay())+3))
+                        }
+                    }
+                    sotcount()
+                }
+            }
+        }
+    }
+
+    private fun packageinformation(): Date {
+        var pack: String = "com.brave.browser"
+        var pm: PackageManager = this.packageManager
+        var packageInfo: PackageInfo = pm.getPackageInfo(pack, PackageManager.GET_PERMISSIONS)
+        var installTime: Date = Date(packageInfo.firstInstallTime)
+        var updateTime: Date = Date(packageInfo.lastUpdateTime)
+
+        return installTime
+    }
+
+
 }
