@@ -198,6 +198,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 newcycle = 0.0
                 setlastchargestate()
+                Log.i("Error:: ","Discharge officially registered")
                 //TO DO:: newcycle never reaches below 0.1 cycles and therefore it always updates last recorded charge -> shouldn't happen
             } else{
                 Log.i("Error::  ", "Discharge difference is too low")
@@ -209,8 +210,10 @@ class MainActivity : AppCompatActivity() {
     private fun checkDifference(givenCharge: Int, currentCharge: Int){
 
         val calc = kotlin.math.abs(givenCharge - currentCharge)
+        Log.i("THIS IS CALC:: ",""+calc)
         for (i in intervals.indices) {
-            if (calc <= intervals[i][0]) {
+            Log.i("THIS IS INTERVALL:: ",""+intervals[i][0])
+            if (calc >= intervals[0][0] && calc <= intervals[i][0]) {
                 newcycle = (intervals[i][1] * 0.1)
             }
         }
