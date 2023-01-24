@@ -59,3 +59,10 @@ data class LRA(
     @ColumnInfo
     var last_running_app: String
 )
+@Entity(tableName = "final_charge_stats")
+data class FCS(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var finalchargecycles: Double,
+)

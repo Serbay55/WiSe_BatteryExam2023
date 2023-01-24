@@ -36,8 +36,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scDao: CDAO
     private lateinit var hcDao: CDAO
     private lateinit var hDao: CDAO
-    public lateinit var sotDao: CDAO
+    private lateinit var sotDao: CDAO
     private lateinit var lraDao: CDAO
+    private lateinit var fcsDao: CDAO
     private lateinit var bstate : BatteryState
     private lateinit var sh : SharedPreferences
     private lateinit var shedit: SharedPreferences.Editor
@@ -85,6 +86,10 @@ class MainActivity : AppCompatActivity() {
             applicationContext,
             DB::class.java, "last_running_app"
         ).build()
+        val fcsdb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "final_charge_stats"
+        ).build()
         //Dataaccessobject servicer
         hDao = hdbs.cDAO()
         cDao = db.cDAO()
@@ -92,6 +97,7 @@ class MainActivity : AppCompatActivity() {
         hcDao = hdb.cDAO()
         lraDao = lradb.cDAO()
         sotDao = sotdb.cDAO()
+        fcsDao = fcsdb.cDAO()
 
         testDB()
         sotcount()
@@ -167,7 +173,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
-            var s = scDao.getLastCharge()
+            var s = scDao.checkExistingLC(1)
             if(s == 0){
                 scDao.insertLCS(LCS(1, getBattery()))
             } else {
@@ -188,31 +194,40 @@ class MainActivity : AppCompatActivity() {
                     getCurrentDay(),
                     getCurrentYear()
                 ) + (newcycle * tCheck())
+
+                if(fcsDao.checkExistingFCS(1)== 0){fcsDao.insertFCS(FCS(0,new_cs))} else { fcsDao.updateFCS(FCS(1,fcsDao.getFCS(1)+new_cs)) }
+
                 cDao.updateCharge(
                     Charge(
                         cDao.getTodaysChargeStatid(
                             getCurrentDay(),
                             getCurrentYear()
-                        ), new_cs, getCurrentDay(), getCurrentYear()
+                        ),
+                        new_cs,
+                        getCurrentDay(),
+                        getCurrentYear()
                     )
                 )
                 newcycle = 0.0
                 setlastchargestate()
                 Log.i("Error:: ","Discharge officially registered")
                 //TO DO:: newcycle never reaches below 0.1 cycles and therefore it always updates last recorded charge -> shouldn't happen
-            } else{
+            } else {
                 Log.i("Error::  ", "Discharge difference is too low")
             }
-
         }
+    }
+
+    private fun calclifeexpectancy(): Int{
+        val life = 800.0
+        val discrepancy: Double = fcsDao.getFCS(1)
+        return (life-discrepancy).toInt()
     }
 
     private fun checkDifference(givenCharge: Int, currentCharge: Int){
 
         val calc = kotlin.math.abs(givenCharge - currentCharge)
-        Log.i("THIS IS CALC:: ",""+calc)
         for (i in intervals.indices) {
-            Log.i("THIS IS INTERVALL:: ",""+intervals[i][0])
             if (calc >= intervals[0][0] && calc <= intervals[i][0]) {
                 newcycle = (intervals[i][1] * 0.1)
             }
@@ -224,7 +239,6 @@ class MainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             val getBat = async {
                 Timer().schedule(10000) {
-                    getBattery()
                     checklastchargestate()
                     checkForegroundapp()
                     batteryStatechecker()
@@ -251,24 +265,12 @@ class MainActivity : AppCompatActivity() {
         val temperature = BatteryState().batteryTemperature(this)
         var tempMult = 0.0
         when {
-            temperature in 20.0..25.0 -> {
-                tempMult = 1.0
-            }
-            temperature in 25.1..30.0 -> {
-                tempMult = 1.1
-            }
-            temperature in 30.1..35.0 -> {
-                tempMult = 1.2
-            }
-            temperature > 35.0 -> {
-                tempMult = 1.25
-            }
-            temperature in 15.0..19.9 -> {
-                tempMult = 1.1
-            }
-            temperature < 15.0 -> {
-                tempMult = 1.2
-            }
+            temperature in 20.0..25.0 -> { tempMult = 1.0 }
+            temperature in 25.1..30.0 -> { tempMult = 1.1 }
+            temperature in 30.1..35.0 -> { tempMult = 1.2 }
+            temperature > 35.0 -> { tempMult = 1.25 }
+            temperature in 15.0..19.9 -> { tempMult = 1.1 }
+            temperature < 15.0 -> { tempMult = 1.2 }
         }
         return tempMult
 
@@ -286,13 +288,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun batteryhealthcalucation(){
+        var cycle: Double = 0.0
         lifecycleScope.launch(Dispatchers.IO){
-            val cycles = cDao.getCycles(getCurrentDay(),getCurrentYear())
-            hcDao.insertHealth(BH(getCurrentDay(),getCurrentYear(),
-                kotlin.math.abs(hDao.getCurrentHealth() - (cycles * 0.025))
-            ))
+
+            if(fcsDao.checkExistingFCS(1)==1) {
+                cycle = fcsDao.getFCS(1)
+            }
+            if(hcDao.checkexistinghealth() == 1){
+                hcDao.updateHealth(LH(1, hcDao.getCurrentHealth() - (cycle * 0.025)))
+            } else {
+                hcDao.insertHealth(LH(0,100.0 - (cycle * 0.025)))
+            }
         }
     }
+
+
     private fun sotcount(){
         lifecycleScope.launch(Dispatchers.IO){
             val async = async {
@@ -308,7 +318,11 @@ class MainActivity : AppCompatActivity() {
                                 )
                             )
                         } else {
-                            sotDao.updateSOT(ScreenOTime(sotDao.getIDSOT(getCurrentDay(),getCurrentYear()),getCurrentDay(),getCurrentYear(),sotDao.gettimefromtoday(getCurrentYear(),getCurrentDay())+3))
+                            sotDao.updateSOT(ScreenOTime(
+                                sotDao.getIDSOT(getCurrentDay(),getCurrentYear()),
+                                getCurrentDay(),
+                                getCurrentYear(),
+                                sotDao.gettimefromtoday(getCurrentYear(),getCurrentDay())+3))
                         }
                     }
                     sotcount()
