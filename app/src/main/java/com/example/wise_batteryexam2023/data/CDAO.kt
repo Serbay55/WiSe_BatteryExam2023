@@ -83,7 +83,7 @@ interface CDAO {
     //______________________________________________________________________________________
     //Final Charge Stats Queries
 
-    @Query("SELECT COUNT(1) FROM final_charge_stats WHERE sid = :askedid")
+    @Query("SELECT COUNT(1) FROM final_charge_stats WHERE id = :askedid")
     fun checkExistingFCS(askedid: Int): Int
 
     @Insert
@@ -92,7 +92,7 @@ interface CDAO {
     @Update
     fun updateFCS(fcs: FCS)
 
-    @Query("SELECT finalchargecycles FROM final_charge_stats WHERE sid = :askedid")
+    @Query("SELECT finalchargecycles FROM final_charge_stats WHERE id = :askedid")
     fun getFCS(askedid: Int): Double
 
     //_______________________________________________________________________________________
