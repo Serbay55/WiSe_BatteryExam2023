@@ -1,5 +1,9 @@
 package com.example.wise_batteryexam2023
 
+import android.content.SharedPreferences
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -7,7 +11,9 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.room.Dao
 import androidx.room.Room
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
@@ -30,12 +36,32 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scDao: CDAO
     private lateinit var hcDao: CDAO
     private lateinit var hDao: CDAO
+    private lateinit var sotDao: CDAO
+    private lateinit var lraDao: CDAO
+    private lateinit var fcsDao: CDAO
     private lateinit var bstate : BatteryState
+    private lateinit var sh : SharedPreferences
+    private lateinit var shedit: SharedPreferences.Editor
     private var newcycle: Double = 0.0
+    var intervals = arrayOf(
+        intArrayOf(10, 0),
+        intArrayOf(20, 1),
+        intArrayOf(30, 2),
+        intArrayOf(40, 3),
+        intArrayOf(50, 4),
+        intArrayOf(60, 5),
+        intArrayOf(70, 6),
+        intArrayOf(80, 7),
+        intArrayOf(90, 8),
+        intArrayOf(95, 9),
+        intArrayOf(100, 10)
+    )
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        //Databasebuilder for building tables if not exists.
         val db = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "charge_stats"
@@ -52,13 +78,30 @@ class MainActivity : AppCompatActivity() {
             applicationContext,
             DB::class.java, "current_health"
         ).build()
-
-
+        val sotdb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "screen_on_time"
+        ).build()
+        val lradb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "last_running_app"
+        ).build()
+        val fcsdb = Room.databaseBuilder(
+            applicationContext,
+            DB::class.java, "final_charge_stats"
+        ).build()
+        //Dataaccessobject servicer
         hDao = hdbs.cDAO()
         cDao = db.cDAO()
         scDao = sdb.cDAO()
         hcDao = hdb.cDAO()
+        lraDao = lradb.cDAO()
+        sotDao = sotdb.cDAO()
+        fcsDao = fcsdb.cDAO()
+
         testDB()
+        sotcount()
+        Log.i("nono: ",""+getBattery())
 
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -80,6 +123,8 @@ class MainActivity : AppCompatActivity() {
         batteryStatechecker()
         actionHealth()
         Log.i("TEST::: ", ""+ InstallTime().getInstallTime(this))
+        Log.i("TEST::: ", ""+ RunningApps().getOldestAppsAge(this))
+        //Log.i("First installation date:::  ", ""+ packageinformation())
     }
 
     /*private fun fakeApiRequest() {
@@ -93,13 +138,17 @@ class MainActivity : AppCompatActivity() {
             Log.i("ASYNC TIME", "TIME ELAPSED MOTHERFUCKER: $executionTime ms.")
         }
     }*/
+    private fun checkForegroundapp(){
+        val s: String = RunningApps().getCurrentForegroundRunningApp(this)
+        Log.i("FOREGROUNDAPP:: ", ""+s)
+    }
 
     private fun testDB(){
         lifecycleScope.launch(Dispatchers.IO){
             //Insert
             Log.i("MyTAG","***** Inserting 3 stats ********")
             cDao.insertCharge(Charge(0,1.0, Calendar.DAY_OF_YEAR, Calendar.YEAR))
-            scDao.insertLCS(LCS(0,getBattery()))
+            //scDao.insertLCS(LCS(0,getBattery()))
             Log.i("MyTAG","***** Inserted 3 stats ********")
 
             //Query
@@ -108,128 +157,189 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MyTAG","id: ${x.id} charges: ${x.chargeStep} ")
                 Log.i("LCS:__:", ""+scDao.getLastCharge())
             }
-        }
-    }
-
-    fun setlastchargestate(){
-        lifecycleScope.launch(Dispatchers.IO){
-            val s = scDao.getLastCharge()
-            if(s == 0) {
-                //To Do deleter of selected table row
-                scDao.insertLCS(LCS(0, getBattery()))
+            val stats2 = scDao.getAllLastCharges()
+            for(y in stats2){
+                Log.i("finally::  ","sid: ${y.sid} lcs: ${y.lastChargeStatus}")
+            }
+            val stat3 = scDao.tester(1)
+            Log.i("Tester::  ",""+stat3)
+            val stat4 = sotDao.getAllSOT()
+            for(z in stat4){
+                Log.i("SOT:::  ","Time: ${z.time}")
             }
         }
     }
 
-    fun checklastchargestate(){
+
+    private fun setlastchargestate(){
+        lifecycleScope.launch(Dispatchers.IO){
+            var s = scDao.checkExistingLC(1)
+            if(s == 0){
+                scDao.insertLCS(LCS(1, getBattery()))
+            } else {
+                scDao.updateLCS(LCS(1,getBattery()))
+            }
+            //To Do deleter of selected table row
+
+        }
+    }
+
+    private fun checklastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
             val lastrecordedcharge = scDao.getLastCharge()
             val currentChargeValue = getBattery()
-            if(lastrecordedcharge != null){
-                    checkDifference(lastrecordedcharge, currentChargeValue)
-                    val new_cs = cDao.getTodaysChargeCycles(getCurrentDay(),getCurrentYear()) + (newcycle * tCheck())
-                    cDao.updateCharge(Charge(cDao.getTodaysChargeStatid(getCurrentDay(),getCurrentYear()),new_cs,getCurrentDay(),getCurrentYear()))
-                    newcycle = 0.0
-            } else {
-                Log.e("ERROR: ", "No last charge ever recorded. Current charge level will be new last charge value")
+            checkDifference(lastrecordedcharge, currentChargeValue)
+            if(newcycle >= 0.1) {
+                val new_cs = cDao.getTodaysChargeCycles(
+                    getCurrentDay(),
+                    getCurrentYear()
+                ) + (newcycle * tCheck())
+
+                if(fcsDao.checkExistingFCS(1)== 0){fcsDao.insertFCS(FCS(0,new_cs))} else { fcsDao.updateFCS(FCS(1,fcsDao.getFCS(1)+new_cs)) }
+
+                cDao.updateCharge(
+                    Charge(
+                        cDao.getTodaysChargeStatid(
+                            getCurrentDay(),
+                            getCurrentYear()
+                        ),
+                        new_cs,
+                        getCurrentDay(),
+                        getCurrentYear()
+                    )
+                )
+                newcycle = 0.0
                 setlastchargestate()
+                Log.i("Error:: ","Discharge officially registered")
+                //TO DO:: newcycle never reaches below 0.1 cycles and therefore it always updates last recorded charge -> shouldn't happen
+            } else {
+                Log.i("Error::  ", "Discharge difference is too low")
             }
         }
     }
 
-    fun checkDifference(givenCharge: Int, currentCharge: Int){
+    private fun calclifeexpectancy(): Int{
+        val life = 800.0
+        val discrepancy: Double = fcsDao.getFCS(1)
+        return (life-discrepancy).toInt()
+    }
 
-        val calc = abs(givenCharge - currentCharge)
-        if(calc in 10..19){
-            newcycle = 0.1
-        } else if(calc in 20..29){
-            newcycle = 0.2
-        } else if(calc in 30..39){
-            newcycle = 0.3
-        } else if(calc in 40..49){
-            newcycle = 0.4
-        } else if(calc in 50..59){
-            newcycle = 0.5
-        } else if(calc in 60..69){
-            newcycle = 0.6
-        } else if(calc in 70..79){
-            newcycle = 0.7
-        } else if(calc in 80..89){
-            newcycle = 0.8
-        } else if(calc in 90..94){
-            newcycle = 0.9
-        } else if(calc in 96..99){
-            newcycle = 1.0
-        } else {
-            newcycle = 0.0
+    private fun checkDifference(givenCharge: Int, currentCharge: Int){
+
+        val calc = kotlin.math.abs(givenCharge - currentCharge)
+        for (i in intervals.indices) {
+            if (calc >= intervals[0][0] && calc <= intervals[i][0]) {
+                newcycle = (intervals[i][1] * 0.1)
+            }
         }
-
     }
 
 
-    fun batteryStatechecker(){
+    private fun batteryStatechecker(){
         CoroutineScope(Dispatchers.IO).launch {
             val getBat = async {
                 Timer().schedule(10000) {
-                    getBattery()
                     checklastchargestate()
-                    setlastchargestate()
+                    checkForegroundapp()
                     batteryStatechecker()
                 }
             }
         }
     }
 
-    fun getBattery() : Int{
+    private fun getBattery() : Int{
         bstate = BatteryState()
-        Log.i("MyTAG: ",""+bstate.getBatteryPercentage(this))
         return bstate.getBatteryPercentage(this)
     }
 
-    fun getCurrentDay(): Int {
+    private fun getCurrentDay(): Int {
         val cal: Calendar = Calendar.getInstance()
         return cal.get(Calendar.DAY_OF_YEAR)
     }
-    fun getCurrentYear(): Int{
+    private fun getCurrentYear(): Int{
         val cal: Calendar = Calendar.getInstance()
         return cal.get(Calendar.YEAR)
     }
 
-    fun tCheck(): Double{
+    private fun tCheck(): Double{
         val temperature = BatteryState().batteryTemperature(this)
         var tempMult = 0.0
-        if(temperature in 20.0..25.0){
-            tempMult = 1.0
-        } else if(temperature in 25.1..30.0){
-            tempMult = 1.1
-        } else if(temperature in 30.1..35.0){
-            tempMult = 1.2
-        } else if(temperature > 35.0){
-            tempMult = 1.25
-        } else if(temperature in 15.0..19.9){
-            tempMult = 1.1
-        } else if(temperature < 15.0){
-            tempMult = 1.2
+        when {
+            temperature in 20.0..25.0 -> { tempMult = 1.0 }
+            temperature in 25.1..30.0 -> { tempMult = 1.1 }
+            temperature in 30.1..35.0 -> { tempMult = 1.2 }
+            temperature > 35.0 -> { tempMult = 1.25 }
+            temperature in 15.0..19.9 -> { tempMult = 1.1 }
+            temperature < 15.0 -> { tempMult = 1.2 }
         }
         return tempMult
+
+
     }
 
-    fun actionHealth(){
+    private fun actionHealth(){
         CoroutineScope(Dispatchers.IO).launch {
             val gBHS = async {
                 Timer().schedule(60000*60*6){
-                    babaninaminisikim()
+                    batteryhealthcalucation()
                 }
             }
         }
     }
 
-
-
-    fun babaninaminisikim(){
+    private fun batteryhealthcalucation(){
+        var cycle: Double = 0.0
         lifecycleScope.launch(Dispatchers.IO){
-            val cycles = cDao.getCycles(getCurrentDay(),getCurrentYear())
-            hcDao.insertHealth(BH(getCurrentDay(),getCurrentYear(),hDao.getCurrentHealth() - (cycles * 0.025)))
+
+            if(fcsDao.checkExistingFCS(1)==1) {
+                cycle = fcsDao.getFCS(1)
+            }
+            if(hcDao.checkexistinghealth() == 1){
+                hcDao.updateHealth(LH(1, hcDao.getCurrentHealth() - (cycle * 0.025)))
+            } else {
+                hcDao.insertHealth(LH(0,100.0 - (cycle * 0.025)))
+            }
         }
     }
+
+
+    private fun sotcount(){
+        lifecycleScope.launch(Dispatchers.IO){
+            val async = async {
+                Timer().schedule(180000){
+                    CoroutineScope(Dispatchers.IO).launch{
+                        if(sotDao.checkExistingSOT(getCurrentDay(),getCurrentYear()) == 0) {
+                            sotDao.insertScreenOnTime(
+                                ScreenOTime(
+                                    0,
+                                    getCurrentDay(),
+                                    getCurrentYear(),
+                                    3
+                                )
+                            )
+                        } else {
+                            sotDao.updateSOT(ScreenOTime(
+                                sotDao.getIDSOT(getCurrentDay(),getCurrentYear()),
+                                getCurrentDay(),
+                                getCurrentYear(),
+                                sotDao.gettimefromtoday(getCurrentYear(),getCurrentDay())+3))
+                        }
+                    }
+                    sotcount()
+                }
+            }
+        }
+    }
+
+    private fun packageinformation(): Date {
+        var pack: String = "com.brave.browser"
+        var pm: PackageManager = this.packageManager
+        var packageInfo: PackageInfo = pm.getPackageInfo(pack, PackageManager.GET_PERMISSIONS)
+        var installTime: Date = Date(packageInfo.firstInstallTime)
+        var updateTime: Date = Date(packageInfo.lastUpdateTime)
+
+        return installTime
+    }
+
+
 }

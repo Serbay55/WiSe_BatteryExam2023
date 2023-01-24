@@ -21,7 +21,7 @@ data class LCS(
     @PrimaryKey(autoGenerate = true)
     var sid: Int,
     @ColumnInfo
-    var lastChargeStatus: Int?
+    var lastChargeStatus: Int?,
 
 )
 @Entity(tableName = "battery_health")
@@ -40,4 +40,29 @@ data class LH(
     @ColumnInfo
     var healthstateofbattery : Double
 
+)
+@Entity(tableName = "screen_on_time")
+data class ScreenOTime(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var dayofyear: Int?,
+    @ColumnInfo
+    var year : Int,
+    @ColumnInfo
+    var time: Int,
+)
+@Entity(tableName = "last_running_app")
+data class LRA(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var last_running_app: String
+)
+@Entity(tableName = "final_charge_stats")
+data class FCS(
+    @PrimaryKey(autoGenerate = true)
+    var id: Int,
+    @ColumnInfo
+    var finalchargecycles: Double,
 )

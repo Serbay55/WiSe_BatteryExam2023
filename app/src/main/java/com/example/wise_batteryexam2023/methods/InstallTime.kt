@@ -3,12 +3,13 @@ package com.example.wise_batteryexam2023.methods
 import kotlin.Throws
 import android.content.pm.PackageManager
 import com.example.wise_batteryexam2023.MainActivity
+import java.util.Date
 
 class InstallTime {
     @Throws(PackageManager.NameNotFoundException::class)
-    fun getInstallTime(context: MainActivity): Int {
+    fun getInstallTime(context: MainActivity): Date {
         val pm = context.packageManager
-        val info = pm.getPackageInfo("com.android.settings", 0)
-        return info.firstInstallTime.toInt()
+        val info = pm.getPackageInfo("com.android.se", 0)
+        return Date(info.firstInstallTime)
     }
 }
