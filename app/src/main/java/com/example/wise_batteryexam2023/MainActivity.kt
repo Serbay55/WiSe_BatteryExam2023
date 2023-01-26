@@ -7,8 +7,10 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import androidx.ui.core.setContent
 import com.example.wise_batteryexam2023.data.*
@@ -39,6 +41,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                navController = rememberNavController()
+                SetupNavGraph(navController = navController)
+            }
+        }
 
         val db = Room.databaseBuilder(
             applicationContext,
