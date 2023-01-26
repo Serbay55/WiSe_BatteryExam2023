@@ -1,19 +1,19 @@
 package com.example.wise_batteryexam2023
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.os.BatteryManager
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.util.Log
+import android.view.Display
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Dao
 import androidx.room.Room
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
@@ -23,11 +23,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import java.awt.font.NumericShaper.Range
-import java.lang.Math.abs
 import kotlin.concurrent.schedule
 import java.util.*
-import kotlin.system.measureTimeMillis
 
 class MainActivity : AppCompatActivity() {
 
@@ -100,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         fcsDao = fcsdb.cDAO()
 
         testDB()
-        sotcount()
+        sotcaller(this)
         Log.i("nono: ",""+getBattery())
 
 
@@ -161,8 +158,6 @@ class MainActivity : AppCompatActivity() {
             for(y in stats2){
                 Log.i("finally::  ","sid: ${y.sid} lcs: ${y.lastChargeStatus}")
             }
-            val stat3 = scDao.tester(1)
-            Log.i("Tester::  ",""+stat3)
             val stat4 = sotDao.getAllSOT()
             for(z in stat4){
                 Log.i("SOT:::  ","Time: ${z.time}")
@@ -173,9 +168,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
-            var s = scDao.checkExistingLC(1)
+            val s = scDao.checkExistingLC(1)
             if(s == 0){
-                scDao.insertLCS(LCS(1, getBattery()))
+                scDao.insertLCS(LCS(0, getBattery()))
             } else {
                 scDao.updateLCS(LCS(1,getBattery()))
             }
@@ -186,16 +181,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun checklastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
-            val lastrecordedcharge = scDao.getLastCharge()
+            val lastrecordedcharge : Int
+            if(scDao.checkExistingLC(1) == 0) lastrecordedcharge = 0 else lastrecordedcharge = scDao.getLastCharge()
             val currentChargeValue = getBattery()
             checkDifference(lastrecordedcharge, currentChargeValue)
             if(newcycle >= 0.1) {
-                val new_cs = cDao.getTodaysChargeCycles(
-                    getCurrentDay(),
-                    getCurrentYear()
-                ) + (newcycle * tCheck())
+                val newcs = (newcycle * tCheck())
 
-                if(fcsDao.checkExistingFCS(1)== 0){fcsDao.insertFCS(FCS(0,new_cs))} else { fcsDao.updateFCS(FCS(1,fcsDao.getFCS(1)+new_cs)) }
+                if(fcsDao.checkExistingFCS(1)== 0){fcsDao.insertFCS(FCS(0,newcs))} else {fcsDao.updateFCS(FCS(1,fcsDao.getFCS(1)+newcs))}
 
                 cDao.updateCharge(
                     Charge(
@@ -203,7 +196,7 @@ class MainActivity : AppCompatActivity() {
                             getCurrentDay(),
                             getCurrentYear()
                         ),
-                        new_cs,
+                        newcs,
                         getCurrentDay(),
                         getCurrentYear()
                     )
@@ -230,6 +223,8 @@ class MainActivity : AppCompatActivity() {
         for (i in intervals.indices) {
             if (calc >= intervals[0][0] && calc <= intervals[i][0]) {
                 newcycle = (intervals[i][1] * 0.1)
+            } else {
+                newcycle = 0.0
             }
         }
     }
@@ -288,7 +283,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun batteryhealthcalucation(){
-        var cycle: Double = 0.0
+        var cycle = 0.0
         lifecycleScope.launch(Dispatchers.IO){
 
             if(fcsDao.checkExistingFCS(1)==1) {
@@ -303,43 +298,61 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun sotcount(){
-        lifecycleScope.launch(Dispatchers.IO){
-            val async = async {
-                Timer().schedule(180000){
-                    CoroutineScope(Dispatchers.IO).launch{
-                        if(sotDao.checkExistingSOT(getCurrentDay(),getCurrentYear()) == 0) {
-                            sotDao.insertScreenOnTime(
-                                ScreenOTime(
-                                    0,
-                                    getCurrentDay(),
-                                    getCurrentYear(),
-                                    3
-                                )
-                            )
-                        } else {
-                            sotDao.updateSOT(ScreenOTime(
-                                sotDao.getIDSOT(getCurrentDay(),getCurrentYear()),
-                                getCurrentDay(),
-                                getCurrentYear(),
-                                sotDao.gettimefromtoday(getCurrentYear(),getCurrentDay())+3))
+
+    private fun sotcaller(context: Context){
+            lifecycleScope.launch(Dispatchers.IO){
+                val async = async {
+                    Timer().schedule(180000){
+                        CoroutineScope(Dispatchers.IO).launch {
+                            if (ScreenActivity().checkScreenActivity(context)) {
+                                Log.e("Screen State::  ", "Screen is on!")
+                                if (sotDao.checkExistingSOT(
+                                        getCurrentDay(),
+                                        getCurrentYear()
+                                    ) == 0
+                                ) {
+                                    sotDao.insertScreenOnTime(
+                                        ScreenOTime(
+                                            0,
+                                            getCurrentDay(),
+                                            getCurrentYear(),
+                                            3
+                                        )
+                                    )
+                                } else {
+                                    sotDao.updateSOT(
+                                        ScreenOTime(
+                                            sotDao.getIDSOT(getCurrentDay(), getCurrentYear()),
+                                            getCurrentDay(),
+                                            getCurrentYear(),
+                                            sotDao.gettimefromtoday(
+                                                getCurrentYear(),
+                                                getCurrentDay()
+                                            ) + 3
+                                        )
+                                    )
+                                }
+                                sotcaller(context)
+                            } else {
+                                sotcaller(context)
+                                Log.e("Screen State  ", "Screen is off")
+                            }
                         }
                     }
-                    sotcount()
                 }
             }
         }
-    }
 
     private fun packageinformation(): Date {
-        var pack: String = "com.brave.browser"
-        var pm: PackageManager = this.packageManager
-        var packageInfo: PackageInfo = pm.getPackageInfo(pack, PackageManager.GET_PERMISSIONS)
-        var installTime: Date = Date(packageInfo.firstInstallTime)
-        var updateTime: Date = Date(packageInfo.lastUpdateTime)
+        val pack = "com.brave.browser"
+        val pm: PackageManager = this.packageManager
+        val packageInfo: PackageInfo = pm.getPackageInfo(pack, PackageManager.GET_PERMISSIONS)
+        val installTime = Date(packageInfo.firstInstallTime)
+        var updateTime = Date(packageInfo.lastUpdateTime)
 
         return installTime
     }
+
 
 
 }

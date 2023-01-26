@@ -9,7 +9,7 @@ class InstallTime {
     @Throws(PackageManager.NameNotFoundException::class)
     fun getInstallTime(context: MainActivity): Date {
         val pm = context.packageManager
-        val info = pm.getPackageInfo("com.android.se", 0)
+        val info = pm.getPackageInfo("android", 0)
         return Date(info.firstInstallTime)
     }
 }
