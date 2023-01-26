@@ -8,7 +8,9 @@ import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
 import androidx.room.Room
+import androidx.ui.core.setContent
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
@@ -33,9 +35,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bstate : BatteryState
     private var newcycle: Double = 0.0
 
+    lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val db = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "charge_stats"
@@ -59,23 +63,6 @@ class MainActivity : AppCompatActivity() {
         scDao = sdb.cDAO()
         hcDao = hdb.cDAO()
         testDB()
-
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-        val sectionsPagerAdapter = SectionsPagerAdapter(this, supportFragmentManager)
-        val viewPager: ViewPager = binding.viewPager
-        viewPager.adapter = sectionsPagerAdapter
-        val tabs: TabLayout = binding.tabs
-        tabs.setupWithViewPager(viewPager)
-        val fab: FloatingActionButton = binding.fab
-
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-        }
 
         batteryStatechecker()
         actionHealth()
