@@ -1,4 +1,4 @@
-package com.example.wise_batteryexam2023
+package com.example.wise_batteryexam2023.ui.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,13 +11,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun LifeScreen(){
+fun AppScreen(){
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ){
         Text(
-            text = "LifeScreenPlaceholder",
+            text = "AppScreenPlaceholder",
             color = MaterialTheme.colorScheme.primary,
             fontSize = MaterialTheme.typography.titleLarge.fontSize,
             fontWeight = FontWeight.Bold
@@ -27,6 +27,6 @@ fun LifeScreen(){
 
 @Composable
 @Preview(showBackground = true)
-fun LifeScreenPreview () {
-    LifeScreen()
+fun AppScreenPreview () {
+    AppScreen()
 }
