@@ -1,13 +1,11 @@
 package com.example.wise_batteryexam2023
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.hardware.display.DisplayManager
+import android.os.BatteryManager
 import android.os.Bundle
 import android.util.Log
-import android.view.Display
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
@@ -37,8 +35,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var lraDao: CDAO
     private lateinit var fcsDao: CDAO
     private lateinit var bstate : BatteryState
-    private lateinit var sh : SharedPreferences
-    private lateinit var shedit: SharedPreferences.Editor
     private var newcycle: Double = 0.0
     var intervals = arrayOf(
         intArrayOf(10, 0),
@@ -97,6 +93,11 @@ class MainActivity : AppCompatActivity() {
         fcsDao = fcsdb.cDAO()
 
         testDB()
+        if(BatteryState().isBatterybeingcharged(this)){
+            Log.e("Battery: ", "is being charged")
+        } else {
+            Log.e("Battery: ","is not being charged")
+        }
         sotcaller(this)
         Log.i("nono: ",""+getBattery())
 
