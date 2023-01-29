@@ -26,6 +26,7 @@ import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
 import com.example.wise_batteryexam2023.methods.InstallTime
+import com.example.wise_batteryexam2023.ui.screens.MainScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -52,8 +53,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             WiSe_BatteryExam2023Theme {
-                navController = rememberNavController()
-                SetupNavGraph(navController = navController)
+                MainScreen()
             }
         }
 
