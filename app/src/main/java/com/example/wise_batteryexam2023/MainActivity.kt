@@ -1,16 +1,22 @@
 package com.example.wise_batteryexam2023
 
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Bundle
+import android.os.Message
 import android.util.Log
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.wise_batteryexam2023.data.*
@@ -279,6 +285,7 @@ class MainActivity : AppCompatActivity() {
             val gBHS = async {
                 Timer().schedule(60000*60*6){
                     batteryhealthcalucation()
+                    checkVoltageHealth()
                 }
             }
         }
@@ -353,6 +360,24 @@ class MainActivity : AppCompatActivity() {
         var updateTime = Date(packageInfo.lastUpdateTime)
 
         return installTime
+    }
+
+    private fun checkVoltageHealth(){
+        if(BatteryState().getBatteryVoltage(this) < 3.8 && BatteryState().getBatteryPercentage(this) == 100 && !BatteryState().isBatterybeingcharged(this)){
+            notificationHandling("Voltage Error!","Your voltage levels are way below what it should be! Its time for a new Battery","Battery Warning")
+        }
+    }
+
+    private fun notificationHandling(title: String, message: String, smallmessage: String){
+        var b = NotificationCompat.Builder(this.applicationContext)
+        b.setAutoCancel(true).
+                setDefaults(NotificationCompat.DEFAULT_ALL).
+                setTicker(smallmessage).
+                setContentTitle(title).
+                setContentText(message)
+
+        var nm = this.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(1,b.build())
     }
 
 
