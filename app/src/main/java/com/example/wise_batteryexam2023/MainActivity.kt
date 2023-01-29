@@ -99,6 +99,7 @@ class MainActivity : AppCompatActivity() {
             Log.e("Battery: ","is not being charged")
         }
         sotcaller(this)
+        Log.i("Test:: Voltage::", ""+BatteryState().getBatteryVoltage(this))
         Log.i("nono: ",""+getBattery())
 
 

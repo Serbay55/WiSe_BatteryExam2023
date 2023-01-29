@@ -35,6 +35,11 @@ class BatteryState {
 
     }
 
+    fun getBatteryVoltage(context: Context): Int {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        return intent?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
+    }
+
 
 
 
