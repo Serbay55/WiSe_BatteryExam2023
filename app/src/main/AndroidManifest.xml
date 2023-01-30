@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     
     <uses-permission android:name="android.permission.GET_TASKS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
     <application
         android:allowBackup="true"
@@ -14,6 +15,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WiSe_BatteryExam2023"
         tools:targetApi="31">
+
+        <receiver android:enabled ="true" android:name=".methods.BootUpReceiver"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -21,7 +32,6 @@
             android:theme="@style/Theme.WiSe_BatteryExam2023.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 

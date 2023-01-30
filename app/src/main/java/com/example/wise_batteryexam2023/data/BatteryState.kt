@@ -25,6 +25,21 @@ class BatteryState {
         }
     }
 
+    fun isBatterybeingcharged(context: Context): Boolean {
+        var ifilter: IntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        var batteryStatus: Intent? = context.registerReceiver(null, ifilter)
+
+        var status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+
+        return status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+
+    }
+
+    fun getBatteryVoltage(context: Context): Int {
+        val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        return intent?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
+    }
+
 
 
 
