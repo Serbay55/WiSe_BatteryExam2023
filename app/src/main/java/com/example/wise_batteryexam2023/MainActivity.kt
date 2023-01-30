@@ -1,23 +1,32 @@
 package com.example.wise_batteryexam2023
 
+import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.text.Layout
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
 
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.TextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -31,6 +40,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 
 import androidx.room.Room
+import androidx.ui.core.Text
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
 import com.example.wise_batteryexam2023.methods.InstallTime
@@ -44,6 +54,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlin.concurrent.schedule
 import java.util.*
+import java.util.zip.Inflater
 
 class MainActivity : AppCompatActivity() {
 
@@ -75,6 +86,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val sharedPreferences: SharedPreferences = getSharedPreferences("",Context.MODE_PRIVATE)
+        val firstTime: Boolean = sharedPreferences.getBoolean("firstTime",true)
+        if(firstTime) {
+            val editor : SharedPreferences.Editor = sharedPreferences.edit()
+            editor.putBoolean("firstTime", false)
+            editor.commit()
+        }
         setContent {
             WiSe_BatteryExam2023Theme {
 
@@ -122,64 +140,54 @@ class MainActivity : AppCompatActivity() {
         sotDao = sotdb.cDAO()
         fcsDao = fcsdb.cDAO()
 
-        testDB()
-        if(BatteryState().isBatterybeingcharged(this)){
-            Log.e("Battery: ", "is being charged")
-        } else {
-            Log.e("Battery: ","is not being charged")
-        }
-        sotcaller(this)
-        Log.i("Test:: Voltage::", ""+BatteryState().getBatteryVoltage(this))
-        Log.i("nono: ",""+getBattery())
 
+        firstbuilddialog(this)
+        sotcaller(this)
         batteryStatechecker()
         actionHealth()
-        Log.i("TEST::: ", ""+ InstallTime().getInstallTime(this))
-        Log.i("TEST::: ", ""+ RunningApps().getOldestAppsAge(this))
-        //Log.i("First installation date:::  ", ""+ packageinformation())
+
     }
 
-    /*private fun fakeApiRequest() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val executionTime = measureTimeMillis {
-                val result1 = async {
-                    Log.i("ASYNC LOGG","HELLO FROM THE OTHER SIDE")
-                    fakeApiRequest()
+    private fun firstbuilddialog(context: Context){
+        var year: Int
+        var stringer: String
+
+        val builder = AlertDialog.Builder(this)
+        val inflater: LayoutInflater = layoutInflater
+        val dialogLayout: View = inflater.inflate(R.layout.insert_year_layout,null)
+        val editText: EditText = dialogLayout.findViewById<EditText>(R.id.et_editText)
+
+        with(builder){
+            setTitle("Enter first year of device!")
+            setPositiveButton("Submit"){
+                dialog, which -> stringer = editText.text.toString()
+                year = Integer.parseInt(stringer)
+                if(year <= getCurrentYear()){
+
                 }
             }
-            Log.i("ASYNC TIME", "TIME ELAPSED MOTHERFUCKER: $executionTime ms.")
+            setNegativeButton("Cancel"){dialog, which -> Log.d("Main ", "Negative Button clicked")}
+
+            setView(dialogLayout)
+            show()
         }
-    }*/
+    }
+
+
+
     private fun checkForegroundapp(){
         val s: String = RunningApps().getCurrentForegroundRunningApp(this)
         Log.i("FOREGROUNDAPP:: ", ""+s)
     }
 
-    private fun testDB(){
-        lifecycleScope.launch(Dispatchers.IO){
-            //Insert
-            Log.i("MyTAG","***** Inserting 3 stats ********")
-            cDao.insertCharge(Charge(0,1.0, Calendar.DAY_OF_YEAR, Calendar.YEAR))
-            //scDao.insertLCS(LCS(0,getBattery()))
-            Log.i("MyTAG","***** Inserted 3 stats ********")
-
-            //Query
-            val stats = cDao.getAllCharges()
-            for(x in stats){
-                Log.i("MyTAG","id: ${x.id} charges: ${x.chargeStep} ")
-                Log.i("LCS:__:", ""+scDao.getLastCharge())
-            }
-            val stats2 = scDao.getAllLastCharges()
-            for(y in stats2){
-                Log.i("finally::  ","sid: ${y.sid} lcs: ${y.lastChargeStatus}")
-            }
-            val stat4 = sotDao.getAllSOT()
-            for(z in stat4){
-                Log.i("SOT:::  ","Time: ${z.time}")
-            }
+    private fun calculatediffyear(input: Int){
+        var difference = getCurrentYear() - input
+        if(difference == 0){
+            updatefinalchargecycles(0.0)
+        } else {
+            updatefinalchargecycles(difference * 365.0)
         }
     }
-
 
     private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
@@ -223,6 +231,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Log.i("Error::  ", "Discharge difference is too low")
             }
+        }
+    }
+
+    private fun updatefinalchargecycles(cycles: Double){
+        if(fcsDao.checkExistingFCS(1)== 0){
+            fcsDao.insertFCS(FCS(0,cycles))
+        } else {
+            fcsDao.updateFCS(FCS(1, fcsDao.getFCS(1)+cycles))
         }
     }
 
@@ -394,6 +410,8 @@ class MainActivity : AppCompatActivity() {
         var nm = this.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1,b.build())
     }
+
+
 
 
 
