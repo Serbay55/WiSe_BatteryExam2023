@@ -141,14 +141,14 @@ class MainActivity : AppCompatActivity() {
         fcsDao = fcsdb.cDAO()
 
 
-        firstbuilddialog(this)
+        firstbuilddialog()
         sotcaller(this)
         batteryStatechecker()
         actionHealth()
 
     }
 
-    private fun firstbuilddialog(context: Context){
+    private fun firstbuilddialog(){
         var year: Int
         var stringer: String
 
@@ -158,16 +158,35 @@ class MainActivity : AppCompatActivity() {
         val editText: EditText = dialogLayout.findViewById<EditText>(R.id.et_editText)
 
         with(builder){
-            setTitle("Enter first year of device!")
+            setTitle("Please enter the year you started using your device for Battery Health estimation")
             setPositiveButton("Submit"){
                 dialog, which -> stringer = editText.text.toString()
                 year = Integer.parseInt(stringer)
-                if(year <= getCurrentYear()){
-
+                if(year <= getCurrentYear() && year > 2008){
+                    calculatediffyear(year)
+                } else {
+                    firstbuilddialogerror()
                 }
             }
-            setNegativeButton("Cancel"){dialog, which -> Log.d("Main ", "Negative Button clicked")}
+            setNegativeButton("Cancel"){dialog, which -> calculatediffyear(getCurrentYear())}
 
+            setView(dialogLayout)
+            show()
+        }
+    }
+
+    private fun firstbuilddialogerror(){
+
+        val builder = AlertDialog.Builder(this)
+        val inflater: LayoutInflater = layoutInflater
+        val dialogLayout: View = inflater.inflate(R.layout.error_year_layout,null)
+
+
+        with(builder){
+            setTitle("The first android device existed starting 2008 and your phone can't be newer than the current date of year, please enter proper information!")
+            setPositiveButton("Understood!"){
+                    dialog, which -> firstbuilddialog()
+            }
             setView(dialogLayout)
             show()
         }
@@ -235,10 +254,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updatefinalchargecycles(cycles: Double){
-        if(fcsDao.checkExistingFCS(1)== 0){
-            fcsDao.insertFCS(FCS(0,cycles))
-        } else {
-            fcsDao.updateFCS(FCS(1, fcsDao.getFCS(1)+cycles))
+        lifecycleScope.launch(Dispatchers.IO) {
+            if (fcsDao.checkExistingFCS(1) == 0) {
+                fcsDao.insertFCS(FCS(0, cycles))
+            } else {
+                fcsDao.updateFCS(FCS(1, fcsDao.getFCS(1) + cycles))
+            }
+            batteryhealthcalucation()
         }
     }
 
@@ -246,6 +268,18 @@ class MainActivity : AppCompatActivity() {
         val life = 800.0
         val discrepancy: Double = fcsDao.getFCS(1)
         return (life-discrepancy).toInt()
+    }
+
+    private fun getnetchargecapacity(): Float {
+        val currentBattery = getBattery().toFloat()
+        var currentHealth: Float
+        if(hcDao.checkexistinghealth() == 1){
+            currentHealth = hcDao.getCurrentHealth().toFloat()
+            return ((currentHealth/100) * currentBattery)
+        } else {
+            batteryhealthcalucation()
+            return getnetchargecapacity()
+        }
     }
 
     private fun checkDifference(givenCharge: Int, currentCharge: Int){
