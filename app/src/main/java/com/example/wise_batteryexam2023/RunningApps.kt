@@ -13,8 +13,8 @@ import java.util.*
 
 class RunningApps {
     fun getCurrentForegroundRunningApp(context: Context): String {
-        var am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        var appProcesses = am.runningAppProcesses
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val appProcesses = am.runningAppProcesses
         for (appProcessInfo in appProcesses) {
             Log.i("For all::  ",""+appProcessInfo.processName)
             if (appProcessInfo.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
@@ -32,13 +32,13 @@ class RunningApps {
         var appsAge: Long = 0
         try{
             appsAge = System.currentTimeMillis()
-            var pkgManager: PackageManager = context.packageManager
-            var lsApp: List<ApplicationInfo> = pkgManager.getInstalledApplications(0)
+            val pkgManager: PackageManager = context.packageManager
+            val lsApp: List<ApplicationInfo> = pkgManager.getInstalledApplications(0)
             for (localApplicationInfo in lsApp){
-                var pkgName: String = localApplicationInfo.packageName
+                val pkgName: String = localApplicationInfo.packageName
                 if(localApplicationInfo.flags == 0 && ApplicationInfo.FLAG_SYSTEM == 0){
-                    var info: PackageInfo = pkgManager.getPackageInfo(pkgName, 0)
-                    var firstInstallTime : Long = info.firstInstallTime
+                    val info: PackageInfo = pkgManager.getPackageInfo(pkgName, 0)
+                    val firstInstallTime : Long = info.firstInstallTime
                     if(firstInstallTime < appsAge){
                         appsAge = info.firstInstallTime
                     }

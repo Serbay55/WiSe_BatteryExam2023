@@ -1,46 +1,43 @@
 package com.example.wise_batteryexam2023
 
-import android.app.Notification
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import android.os.BatteryManager
 import android.os.Bundle
-import android.os.Message
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
 
 import android.util.Log
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
-import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import androidx.room.Dao
 
 import androidx.room.Room
-import androidx.ui.core.setContent
 import com.example.wise_batteryexam2023.data.*
-import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
 import com.example.wise_batteryexam2023.methods.InstallTime
+import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
 import com.example.wise_batteryexam2023.ui.screens.MainScreen
+import com.example.wise_batteryexam2023.ui.theme.gray
+import com.example.wise_batteryexam2023.ui.theme.orange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -80,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             WiSe_BatteryExam2023Theme {
-                MainScreen()
+
             }
         }
 
@@ -273,6 +270,10 @@ class MainActivity : AppCompatActivity() {
         val cal: Calendar = Calendar.getInstance()
         return cal.get(Calendar.YEAR)
     }
+    private fun getCurrentDayofMonth(): Int{
+        val cal: Calendar = Calendar.getInstance()
+        return cal.get(Calendar.DAY_OF_MONTH)
+    }
 
     private fun tCheck(): Double{
         val temperature = BatteryState().batteryTemperature(this)
@@ -293,9 +294,13 @@ class MainActivity : AppCompatActivity() {
     private fun actionHealth(){
         CoroutineScope(Dispatchers.IO).launch {
             val gBHS = async {
-                Timer().schedule(60000*60*6){
-                    batteryhealthcalucation()
-                    checkVoltageHealth()
+                Timer().schedule(60000*60*24){
+                    if(getCurrentDayofMonth() == 1) {
+                        batteryhealthcalucation()
+                        checkVoltageHealth()
+                        actionHealth()
+                    }
+                    actionHealth()
                 }
             }
         }
@@ -389,6 +394,7 @@ class MainActivity : AppCompatActivity() {
         var nm = this.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1,b.build())
     }
+
 
 
 
