@@ -30,7 +30,7 @@ fun ChargeScreen(){
         modifier = Modifier.fillMaxSize()
     ){
         Column {
-            //ChargeTopText()
+            ChargeTopText()
             CircularChargeBar(percentage = 0.8f, number =100 )
         }
     }
@@ -38,7 +38,8 @@ fun ChargeScreen(){
 
 @Composable
 fun ChargeTopText(
-    TopText: String = "Your phones' current charge is:"
+    TopText: String = "Your phones' current charge is:",
+    fontSize: TextUnit = 21.sp
 ){
     Row(
         horizontalArrangement = Arrangement.Center,
@@ -49,7 +50,8 @@ fun ChargeTopText(
     ){
             Text(
                 text = TopText,
-                color = BrightSecondary
+                color = BrightSecondary,
+                fontSize = fontSize
             )
     }
 }
