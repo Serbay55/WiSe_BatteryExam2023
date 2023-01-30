@@ -5,6 +5,16 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
 import android.util.Log
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
@@ -13,12 +23,16 @@ import androidx.viewpager.widget.ViewPager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import androidx.room.Dao
 import androidx.room.Room
+import androidx.ui.core.setContent
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.main.SectionsPagerAdapter
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
 import com.example.wise_batteryexam2023.methods.InstallTime
+import com.example.wise_batteryexam2023.ui.screens.MainScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -57,11 +71,20 @@ class MainActivity : AppCompatActivity() {
         intArrayOf(100, 10)
     )
 
+    lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContent {
+            WiSe_BatteryExam2023Theme {
+                MainScreen()
+            }
+        }
+
+
 
         //Databasebuilder for building tables if not exists.
+
         val db = Room.databaseBuilder(
             applicationContext,
             DB::class.java, "charge_stats"
@@ -102,23 +125,6 @@ class MainActivity : AppCompatActivity() {
         testDB()
         sotcount()
         Log.i("nono: ",""+getBattery())
-
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-
-        val sectionsPagerAdapter = SectionsPagerAdapter(this, supportFragmentManager)
-        val viewPager: ViewPager = binding.viewPager
-        viewPager.adapter = sectionsPagerAdapter
-        val tabs: TabLayout = binding.tabs
-        tabs.setupWithViewPager(viewPager)
-        val fab: FloatingActionButton = binding.fab
-
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-        }
 
         batteryStatechecker()
         actionHealth()
