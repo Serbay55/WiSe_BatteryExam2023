@@ -23,27 +23,34 @@ import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
 import com.example.wise_batteryexam2023.ui.theme.*
 import java.util.*
 
-/*@Composable
-fun ChargeScreen(){
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ){
-        Text(
-            text = "ChargeScreenPlaceholder",
-            color = MaterialTheme.colorScheme.primary,
-            fontSize = MaterialTheme.typography.titleLarge.fontSize,
-            fontWeight = FontWeight.Bold
-            )
-    }
-}*/
 @Composable
 fun ChargeScreen(){
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ){
-        CircularChargeBar(percentage = 0.8f, number =100 )
+        Column {
+            //ChargeTopText()
+            CircularChargeBar(percentage = 0.8f, number =100 )
+        }
+    }
+}
+
+@Composable
+fun ChargeTopText(
+    TopText: String = "Your phones' current charge is:"
+){
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(50.dp)
+    ){
+            Text(
+                text = TopText,
+                color = BrightSecondary
+            )
     }
 }
 
@@ -54,10 +61,10 @@ fun ChargeScreen(){
 fun CircularChargeBar(
     percentage : Float,
     number : Int,
-    fontSize: TextUnit = 28.sp,
-    radius: Dp = 50.dp,
+    fontSize: TextUnit = 100.sp,
+    radius: Dp = 200.dp,
     color: Color = BlueTertiary,
-    strokeWidth: Dp = 8.dp,
+    strokeWidth: Dp = 5.dp,
     animDuration: Int = 1000,
     animDelay: Int = 0
 ){
@@ -77,7 +84,9 @@ fun CircularChargeBar(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.size(radius * 2f)
+        modifier = Modifier.
+                size(radius * 2f).
+                padding(50.dp)
     ){
         Canvas(modifier = Modifier.size(radius * 2f)){
             drawArc(
@@ -89,7 +98,7 @@ fun CircularChargeBar(
             )
         }
         Text(
-            text = (curPercentage.value * number).toInt().toString(),
+            text = (curPercentage.value * number).toInt().toString() + "%",
             color = BrightSecondary,
             fontSize = fontSize,
             fontWeight = FontWeight.Bold
