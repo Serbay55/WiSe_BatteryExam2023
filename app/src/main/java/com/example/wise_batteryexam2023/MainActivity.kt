@@ -1,30 +1,36 @@
 package com.example.wise_batteryexam2023
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
 
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 
@@ -36,8 +42,7 @@ import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
 import com.example.wise_batteryexam2023.methods.InstallTime
 import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
 import com.example.wise_batteryexam2023.ui.screens.MainScreen
-import com.example.wise_batteryexam2023.ui.theme.gray
-import com.example.wise_batteryexam2023.ui.theme.orange
+import com.example.wise_batteryexam2023.ui.theme.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -80,7 +85,6 @@ class MainActivity : AppCompatActivity() {
                 MainScreen()
             }
         }
-
 
 
         //Databasebuilder for building tables if not exists.
@@ -399,3 +403,53 @@ class MainActivity : AppCompatActivity() {
 
 
 }
+/*
+//Circular Bar
+
+@SuppressLint("RememberReturnType")
+@Composable
+fun CircularChargeBar(
+    percentage : Float,
+    number : Int,
+    fontSize: TextUnit = 28.sp,
+    radius: Dp = 50.dp,
+    color: Color = BlueTertiary,
+    strokeWidth: Dp = 8.dp,
+    animDuration: Int = 1000,
+    animDelay: Int = 0
+){
+    var animationPlayed by remember {
+        mutableStateOf(false)
+    }
+    val curPercentage = animateFloatAsState(
+        targetValue = if(animationPlayed) percentage else 0f,
+        animationSpec = tween(
+            durationMillis = animDuration,
+            delayMillis = animDelay
+        )
+    )
+    LaunchedEffect(key1 = true){
+        animationPlayed = true
+    }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(radius * 2f)
+    ){
+        Canvas(modifier = Modifier.size(radius * 2f)){
+            drawArc(
+                color = color,
+                -90f,
+                360 * curPercentage.value,
+                useCenter = false,
+                style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Butt )
+            )
+        }
+        Text(
+            text = (curPercentage.value * number).toInt().toString(),
+            color = BrightSecondary,
+            fontSize = fontSize,
+            fontWeight = FontWeight.Bold
+        )
+    }
+} */
