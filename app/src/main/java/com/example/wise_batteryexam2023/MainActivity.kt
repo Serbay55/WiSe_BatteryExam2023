@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             WiSe_BatteryExam2023Theme {
-
+                MainScreen()
             }
         }
 

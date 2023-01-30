@@ -21,7 +21,7 @@ import com.example.wise_batteryexam2023.SetupNavGraph
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(box: Unit) {
+fun MainScreen() {
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomBar(navController = navController)}
