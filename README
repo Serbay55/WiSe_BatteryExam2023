@@ -1,0 +1,24 @@
+This App isn't finished properly due to illness and poor Time management between 2 Colleagues
+
+We have struggled to bind our Room Database reactively with our Jetpack Compose GUI based on composable Functions.
+The composable Functions needed MainViewModel and MainViewModelFactory classes including a Repository bound to the MainViewModel.
+Despite our efforts to implement the above mentioned part, we have suffered a lack of knowledge based on how we man access
+new Database data reactively and put it into list of ViewModel objects containing database connections. 
+
+Furthermore we had the Goal to build statistics about Apps running in fore and background of our Android System.
+The Background process of timing the Screen On Time works, but unforunately the Context within our application Context complex
+is only capable of accessing package information running in the foreground that is the same package as the app itself.
+Android and its safety protocol denied any touch to know which package was running in the foreground and therefore killed our plans
+about tracking apps individually.
+
+What does the App do?:
+
+- It tracks the Screen On Time (Though we haven't visualized the number of minutes past due to first reason of failure)
+- It tracks individual discharge and charge cycles
+- It calculates the Health of the battery after 24 hours if its the first of Month
+- The cycles are being multiplied with a temperature factor, because Li-ion Batteries suffer more in extreme temperatures
+- The Screen On Time is being saved onto the current Date of use. -> For further statistics
+- The User is being notified by a NotificationCompat.Builder when the Voltage levels of the Battery are too low on full charge or
+  when the Battery level is below 20% or overheating.
+  
+The App is developed with a min sdk of 24 or Android 7 Nougat on a Pixel 3a.
