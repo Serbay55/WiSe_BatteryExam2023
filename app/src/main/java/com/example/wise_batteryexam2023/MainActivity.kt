@@ -7,55 +7,29 @@ import android.content.SharedPreferences
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.text.Layout
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
-
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.TextField
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
-
 import androidx.navigation.NavHostController
-
 import androidx.room.Room
-import androidx.ui.core.Text
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
-import com.example.wise_batteryexam2023.methods.InstallTime
-import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
-import com.example.wise_batteryexam2023.ui.screens.MainScreen
-import com.example.wise_batteryexam2023.ui.theme.gray
-import com.example.wise_batteryexam2023.ui.theme.orange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlin.concurrent.schedule
 import java.util.*
-import java.util.zip.Inflater
 
+
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -82,16 +56,18 @@ class MainActivity : AppCompatActivity() {
         intArrayOf(100, 10)
     )
 
-    lateinit var navController: NavHostController
+    //lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //Initial first start of App on Device
         val sharedPreferences: SharedPreferences = getSharedPreferences("",Context.MODE_PRIVATE)
         val firstTime: Boolean = sharedPreferences.getBoolean("firstTime",true)
         if(firstTime) {
             val editor : SharedPreferences.Editor = sharedPreferences.edit()
             editor.putBoolean("firstTime", false)
-            editor.commit()
+            editor.apply()
+            firstbuilddialog()
         }
         setContent {
             WiSe_BatteryExam2023Theme {
@@ -131,7 +107,7 @@ class MainActivity : AppCompatActivity() {
             applicationContext,
             DB::class.java, "final_charge_stats"
         ).build()
-        //Dataaccessobject servicer
+        //Dataaccessobject service
         hDao = hdbs.cDAO()
         cDao = db.cDAO()
         scDao = sdb.cDAO()
@@ -141,24 +117,27 @@ class MainActivity : AppCompatActivity() {
         fcsDao = fcsdb.cDAO()
 
 
-        firstbuilddialog()
+
         sotcaller(this)
         batteryStatechecker()
         actionHealth()
 
     }
 
+
     private fun firstbuilddialog(){
         var year: Int
         var stringer: String
-
+        val customTV = TextView(this)
+        customTV.text = "Please enter the year you started using your device for Battery Health estimation"
         val builder = AlertDialog.Builder(this)
         val inflater: LayoutInflater = layoutInflater
         val dialogLayout: View = inflater.inflate(R.layout.insert_year_layout,null)
         val editText: EditText = dialogLayout.findViewById<EditText>(R.id.et_editText)
 
         with(builder){
-            setTitle("Please enter the year you started using your device for Battery Health estimation")
+            setCustomTitle(customTV)
+            //setTitle("Please enter the year you started using your device for Battery Health estimation")
             setPositiveButton("Submit"){
                 dialog, which -> stringer = editText.text.toString()
                 year = Integer.parseInt(stringer)
@@ -179,11 +158,13 @@ class MainActivity : AppCompatActivity() {
 
         val builder = AlertDialog.Builder(this)
         val inflater: LayoutInflater = layoutInflater
+        val customTextView = TextView(this)
+        customTextView.text = "The first android device existed starting 2008 and your phone can't be newer than the current date of year, please enter proper information!"
         val dialogLayout: View = inflater.inflate(R.layout.error_year_layout,null)
 
 
         with(builder){
-            setTitle("The first android device existed starting 2008 and your phone can't be newer than the current date of year, please enter proper information!")
+            setCustomTitle(customTextView)
             setPositiveButton("Understood!"){
                     dialog, which -> firstbuilddialog()
             }
@@ -193,14 +174,15 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
-    private fun checkForegroundapp(){
+    /*unfortunately useless action, because context of getting current
+    foreground app only gets the app itself and no other foreign packages*/
+    private fun checkForegroundapp(): String{
         val s: String = RunningApps().getCurrentForegroundRunningApp(this)
-        Log.i("FOREGROUNDAPP:: ", ""+s)
+        return s
     }
-
+    //calculates difference of current year and year entered in inital startup
     private fun calculatediffyear(input: Int){
-        var difference = getCurrentYear() - input
+        val difference = getCurrentYear() - input
         if(difference == 0){
             updatefinalchargecycles(0.0)
         } else {
@@ -208,6 +190,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //saves the last ever recorded charge or updates it if it already exists
     private fun setlastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
             val s = scDao.checkExistingLC(1)
@@ -221,6 +204,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //Essenstial function to calculate Charge / discharge cycles based on temperature parameters
     private fun checklastchargestate(){
         lifecycleScope.launch(Dispatchers.IO){
             val lastrecordedcharge : Int
@@ -245,14 +229,13 @@ class MainActivity : AppCompatActivity() {
                 )
                 newcycle = 0.0
                 setlastchargestate()
-                Log.i("Error:: ","Discharge officially registered")
+
                 //TO DO:: newcycle never reaches below 0.1 cycles and therefore it always updates last recorded charge -> shouldn't happen
-            } else {
-                Log.i("Error::  ", "Discharge difference is too low")
             }
         }
     }
 
+    //Necessary for estimation of Battery Health
     private fun updatefinalchargecycles(cycles: Double){
         lifecycleScope.launch(Dispatchers.IO) {
             if (fcsDao.checkExistingFCS(1) == 0) {
@@ -264,15 +247,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //calculates based on practical knowledge the estimated time left before next Battery Upgrade
     private fun calclifeexpectancy(): Int{
         val life = 800.0
         val discrepancy: Double = fcsDao.getFCS(1)
         return (life-discrepancy).toInt()
     }
 
+    //Cake chart filler for current nett battery capacity
     private fun getnetchargecapacity(): Float {
         val currentBattery = getBattery().toFloat()
-        var currentHealth: Float
+        val currentHealth: Float
         if(hcDao.checkexistinghealth() == 1){
             currentHealth = hcDao.getCurrentHealth().toFloat()
             return ((currentHealth/100) * currentBattery)
@@ -301,6 +286,9 @@ class MainActivity : AppCompatActivity() {
                 Timer().schedule(10000) {
                     checklastchargestate()
                     checkForegroundapp()
+                    checkBatteryCondition()
+                    checkVoltageHealth()
+                    checkTemperatureCondition()
                     batteryStatechecker()
                 }
             }
@@ -347,7 +335,6 @@ class MainActivity : AppCompatActivity() {
                 Timer().schedule(60000*60*24){
                     if(getCurrentDayofMonth() == 1) {
                         batteryhealthcalucation()
-                        checkVoltageHealth()
                         actionHealth()
                     }
                     actionHealth()
@@ -379,7 +366,6 @@ class MainActivity : AppCompatActivity() {
                     Timer().schedule(180000){
                         CoroutineScope(Dispatchers.IO).launch {
                             if (ScreenActivity().checkScreenActivity(context)) {
-                                Log.e("Screen State::  ", "Screen is on!")
                                 if (sotDao.checkExistingSOT(
                                         getCurrentDay(),
                                         getCurrentYear()
@@ -409,7 +395,6 @@ class MainActivity : AppCompatActivity() {
                                 sotcaller(context)
                             } else {
                                 sotcaller(context)
-                                Log.e("Screen State  ", "Screen is off")
                             }
                         }
                     }
@@ -427,19 +412,28 @@ class MainActivity : AppCompatActivity() {
         return installTime
     }
 
+    private fun checkBatteryCondition(){
+        if(getBattery()<20) notificationHandling("Battery very low!","Please charge your battery to keep it above 20% and below 90%","Battery Warning")
+    }
+
     private fun checkVoltageHealth(){
         if(BatteryState().getBatteryVoltage(this) < 3.8 && BatteryState().getBatteryPercentage(this) == 100 && !BatteryState().isBatterybeingcharged(this)){
             notificationHandling("Voltage Error!","Your voltage levels are way below what it should be! Its time for a new Battery","Battery Warning")
         }
     }
 
+    private fun checkTemperatureCondition(){
+        if(BatteryState().batteryTemperature(this) > 40) notificationHandling("Temperature Error!", "Your Battery temperature is way too high make sure you cool down the Battery by not using it","Battery Warning")
+    }
+
     private fun notificationHandling(title: String, message: String, smallmessage: String){
-        var b = NotificationCompat.Builder(this.applicationContext)
+        val b = NotificationCompat.Builder(this.applicationContext)
         b.setAutoCancel(true).
                 setDefaults(NotificationCompat.DEFAULT_ALL).
                 setTicker(smallmessage).
                 setContentTitle(title).
-                setContentText(message)
+                setContentText(message).
+                setSmallIcon(R.drawable.large_battery_icon)
 
         var nm = this.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1,b.build())
