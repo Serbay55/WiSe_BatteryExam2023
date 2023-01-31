@@ -13,11 +13,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.wise_batteryexam2023.MainActivity
 import com.example.wise_batteryexam2023.methods.StandardMethods
+import com.example.wise_batteryexam2023.ui.MainViewModel
 import com.example.wise_batteryexam2023.ui.theme.BlueTertiary
 import com.example.wise_batteryexam2023.ui.theme.BrightSecondary
 
 @Composable
-fun LifeScreen(){
+fun LifeScreen(viewmodel: MainViewModel){
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
@@ -95,5 +97,5 @@ fun InformationText(
 @Composable
 @Preview(showBackground = true)
 fun LifeScreenPreview () {
-    LifeScreen()
+    //LifeScreen()
 }

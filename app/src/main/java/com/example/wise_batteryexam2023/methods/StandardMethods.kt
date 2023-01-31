@@ -79,7 +79,6 @@ class StandardMethods (applicationContext: Context){
     var fcsDao: CDAO = fcsdb.cDAO()
     var nccDao: CDAO = nccdb.cDAO()
     lateinit var bstate : BatteryState
-    var discrepancy: Double = 0.0
 
     fun checkForegroundapp(context: Context): String{
         val s: String = RunningApps().getCurrentForegroundRunningApp(context)
@@ -155,11 +154,15 @@ class StandardMethods (applicationContext: Context){
     }
 
     //calculates based on practical knowledge the estimated time left before next Battery Upgrade
-    fun calclifeexpectancy(): Int{
+    fun calclifeexpectancy(){
         val life = 800.0
-        CoroutineScope(Dispatchers.IO).launch { discrepancy = fcsDao.getFCS(1) }
-        Log.e("discrepancy:: ",""+discrepancy)
-        return (life-discrepancy).toInt()
+        CoroutineScope(Dispatchers.IO).launch {
+            if(fcsDao.checkExistingFCS(1)== 1) {
+                var discrepancy = fcsDao.getFCS(1)
+
+            }
+        }
+
     }
 
     //Cake chart filler for current nett battery capacity
@@ -168,20 +171,21 @@ class StandardMethods (applicationContext: Context){
             val currentBattery = getBattery().toFloat()
             if (hDao.checkexistinghealth() == 1) {
                 val currentHealth = hDao.getCurrentHealth().toFloat()
-                val end = ((currentHealth / 100) * currentBattery)
+                Log.i("current Health:: ",""+ currentHealth)
+                if(nccDao.checkNCCexisting() == 0) {
+                    Log.i("TEST:: ", " "+currentBattery+" "+((currentHealth / 100) * currentBattery))
+                    nccDao.insertNCC(NCC(0, ((currentHealth / 100) * currentBattery)))
+                } else {
+                    nccDao.updateNCC(NCC(1,((currentHealth / 100) * currentBattery)))
+                }
             } else {
                 batteryhealthcalucation()
+                currentnetbattery()
             }
         }
 
     }
 
-    suspend fun erneuterVersuch(): Float{
-        val deffered:Deferred<Float> = MainActivity().lifecycleScope.async{
-            hDao.getCurrentHealth().toFloat()
-        }
-        return deffered.await()
-    }
 
 
 
@@ -202,6 +206,7 @@ class StandardMethods (applicationContext: Context){
         CoroutineScope(Dispatchers.IO).launch {
             val getBat = async {
                 Timer().schedule(10000) {
+                    currentnetbattery()
                     checklastchargestate()
                     checkBatteryCondition()
                     checkVoltageHealth()

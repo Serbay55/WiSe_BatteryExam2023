@@ -21,6 +21,8 @@ abstract class DB : RoomDatabase(){
                         DB::class.java,
                         "net_charge_capacity"
                     ).fallbackToDestructiveMigration().build()
+
+                    INSTANCE = instance
                 }
                 return instance
             }

@@ -19,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.wise_batteryexam2023.BottomBarScreen
 import com.example.wise_batteryexam2023.SetupNavGraph
+import com.example.wise_batteryexam2023.ui.MainViewModel
 import com.example.wise_batteryexam2023.ui.theme.AlphaMax
 import com.example.wise_batteryexam2023.ui.theme.BlueTertiary
 import com.example.wise_batteryexam2023.ui.theme.BrightSecondary
@@ -27,13 +28,13 @@ import com.example.wise_batteryexam2023.ui.theme.DarkPrimary
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(viewModel: MainViewModel) {
     val navController = rememberNavController()
     Scaffold(
         bottomBar = { BottomBar(navController = navController)},
         containerColor = DarkPrimary
     ) {
-      SetupNavGraph(navController = navController)
+      SetupNavGraph(navController = navController, viewModel)
     }
 }
 
@@ -100,5 +101,5 @@ fun RowScope.AddItem(
 @Composable
 @Preview(showBackground = true)
 fun MainScreenPreview () {
-    MainScreen()
+    //MainScreen()
 }

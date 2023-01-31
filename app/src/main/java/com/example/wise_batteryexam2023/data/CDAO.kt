@@ -6,8 +6,8 @@ import androidx.room.*
 @Dao
 interface CDAO {
 
-    @Query("SELECT * FROM current_health")
-    fun getAll(): LiveData<List<LH>>
+    @Query("SELECT * FROM net_charge_capacity")
+    fun getAll(): LiveData<List<NCC>>
 
     //Charge Queries
 
@@ -125,10 +125,12 @@ interface CDAO {
     @Update
     suspend fun updateNCC(ncc: NCC)
 
-    @Query("SELECT netchargecapacity FROM net_charge_capacity WHERE id = 1")
-    fun getNCC(): Float
+    @Query("SELECT netchargecapacity FROM net_charge_capacity WHERE id = :askedid")
+    fun getNCC(askedid: Int): Float
 
     @Query("SELECT COUNT(1) FROM net_charge_capacity WHERE id = 1")
     fun checkNCCexisting(): Int
 
+    @Query("SELECT * FROM net_charge_capacity WHERE id = :askedid")
+    fun findNCC(askedid: Int): List<NCC>
 }

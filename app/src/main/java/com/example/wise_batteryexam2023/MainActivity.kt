@@ -4,6 +4,7 @@ package com.example.wise_batteryexam2023
 
 
 import android.app.AlertDialog
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -16,11 +17,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wise_batteryexam2023.data.*
-import com.example.wise_batteryexam2023.ui.screens.MainScreen
 import com.example.wise_batteryexam2023.ui.theme.*
 import com.example.wise_batteryexam2023.methods.StandardMethods
+import com.example.wise_batteryexam2023.ui.MainViewModel
+import com.example.wise_batteryexam2023.ui.MainViewModelFactory
+import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
+import com.example.wise_batteryexam2023.ui.screens.LifeScreen
+import com.example.wise_batteryexam2023.ui.screens.MainScreen
 import java.util.*
 
 
@@ -34,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //Initial first start of App on Device
+        StandardMethods(this).currentnetbattery()
+        StandardMethods(this).calclifeexpectancy()
         val sharedPreferences: SharedPreferences = getSharedPreferences("",Context.MODE_PRIVATE)
         val firstTime: Boolean = sharedPreferences.getBoolean("firstTime",true)
         if(firstTime) {
@@ -44,14 +56,24 @@ class MainActivity : AppCompatActivity() {
         }
         setContent {
             WiSe_BatteryExam2023Theme {
-                MainScreen()
+                /*MainScreen(
+                )*/
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+                    val owner = LocalViewModelStoreOwner.current
+
+                    owner?.let {
+                        val viewmodel: MainViewModel = viewModel(it, "MainViewModel", MainViewModelFactory(LocalContext.current.applicationContext as Application))
+
+                        ChargeScreen(viewmodel)
+                        MainScreen(viewmodel)
+                    }
+                }
             }
         }
 
 
 
-        val methods: StandardMethods = StandardMethods(this)
-        methods.actionHealth()
+
         StandardMethods(this).sotcaller(this)
         StandardMethods(this).batteryStatechecker()
         StandardMethods(this).actionHealth()

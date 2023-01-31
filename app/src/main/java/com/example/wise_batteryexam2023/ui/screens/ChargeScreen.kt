@@ -2,12 +2,14 @@ package com.example.wise_batteryexam2023.ui.screens
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.util.Log
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,29 +22,46 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.methods.StandardMethods
+import com.example.wise_batteryexam2023.ui.MainViewModel
+import com.example.wise_batteryexam2023.ui.MainViewModelFactory
 import com.example.wise_batteryexam2023.ui.theme.*
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.absoluteValue
 
 
 @Composable
-fun ChargeScreen(){
+fun ChargeScreen(viewmodel: MainViewModel){
     val context = LocalContext.current
+    var content: Float = 0f
+    val allNCC by viewmodel.allNCC.observeAsState(listOf())
+    for(x in allNCC){
+        content = x.netchargecapacity.div(100)
+    }
+    //Unfortunately the List of all net charge states isn't being updated, so allNCC stays at final state
+    //Therefore Battery net state is reporting false values. Though using StandardMethods(context).getBattery()/100f
+    //reports current Battery onto UI and also updates whenever the Navbar is being used.
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize()
     ){
         Column {
             ChargeTopText()
-            CircularChargeBar(percentage = StandardMethods(context).getBattery()/100.toFloat(), number =100 )
+            CircularChargeBar(percentage = content, number =100 )
         }
     }
 }
 
+
+
 @Composable
 fun ChargeTopText(
-    TopText: String = "Your phones' current charge is:",
+    TopText: String = "Your phones real net charge is:",
     fontSize: TextUnit = 21.sp
 ){
     Row(
@@ -115,5 +134,5 @@ fun CircularChargeBar(
 @Composable
 @Preview(showBackground = true)
 fun ChargeScreenPreview () {
-    ChargeScreen()
+    //ChargeScreen()
 }
