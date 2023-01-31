@@ -1,6 +1,10 @@
 package com.example.wise_batteryexam2023
 
+
+import android.annotation.SuppressLint
+
 import android.app.AlertDialog
+
 import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
@@ -8,18 +12,52 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
+
+import androidx.compose.ui.Modifier
+
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.databinding.ActivityMainBinding
+
+import com.example.wise_batteryexam2023.methods.InstallTime
+import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
+import com.example.wise_batteryexam2023.ui.screens.MainScreen
+import com.example.wise_batteryexam2023.ui.theme.*
+
 import com.example.wise_batteryexam2023.methods.StandardMethods
+
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -48,10 +86,9 @@ class MainActivity : AppCompatActivity() {
         }
         setContent {
             WiSe_BatteryExam2023Theme {
-
+                MainScreen()
             }
         }
-
 
 
 
