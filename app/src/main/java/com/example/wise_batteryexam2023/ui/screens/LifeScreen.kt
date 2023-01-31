@@ -21,20 +21,6 @@ import com.example.wise_batteryexam2023.ui.theme.BrightSecondary
 import com.example.wise_batteryexam2023.ui.theme.DarkPrimary
 import kotlin.coroutines.coroutineContext
 
-/*@Composable
-fun LifeScreen(){
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ){
-        Text(
-            text = "LifeScreenPlaceholder",
-            color = MaterialTheme.colorScheme.primary,
-            fontSize = MaterialTheme.typography.titleLarge.fontSize,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}*/
 @Composable
 fun LifeScreen(){
     Box(

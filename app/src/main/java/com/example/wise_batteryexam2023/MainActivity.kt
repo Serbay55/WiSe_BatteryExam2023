@@ -8,7 +8,18 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.compose.setContent
+
+
+import androidx.compose.ui.Modifier
+
+import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+
 import androidx.appcompat.app.AppCompatActivity
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
