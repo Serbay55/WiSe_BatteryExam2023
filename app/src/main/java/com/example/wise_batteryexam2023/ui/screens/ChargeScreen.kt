@@ -1,7 +1,7 @@
 package com.example.wise_batteryexam2023.ui.screens
 
 import android.annotation.SuppressLint
-import android.content.Context
+import android.app.Application
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -20,15 +20,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.wise_batteryexam2023.MainActivity
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.methods.StandardMethods
-import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
 import com.example.wise_batteryexam2023.ui.theme.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.util.*
+
 
 @Composable
 fun ChargeScreen(){
@@ -39,7 +35,7 @@ fun ChargeScreen(){
     ){
         Column {
             ChargeTopText()
-            CircularChargeBar(percentage = StandardMethods(context).getBattery().toFloat()/100, number =100 )
+            CircularChargeBar(percentage = StandardMethods(context).getBattery()/100.toFloat(), number =100 )
         }
     }
 }
@@ -94,9 +90,9 @@ fun CircularChargeBar(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.
-                size(radius * 2f).
-                padding(50.dp)
+        modifier = Modifier
+            .size(radius * 2f)
+            .padding(50.dp)
     ){
         Canvas(modifier = Modifier.size(radius * 2f)){
             drawArc(

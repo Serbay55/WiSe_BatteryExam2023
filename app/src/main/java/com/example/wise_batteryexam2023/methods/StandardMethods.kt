@@ -6,7 +6,6 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.async
 import androidx.room.Room
@@ -16,8 +15,6 @@ import com.example.wise_batteryexam2023.RunningApps
 import com.example.wise_batteryexam2023.ScreenActivity
 import com.example.wise_batteryexam2023.data.*
 import kotlinx.coroutines.*
-import java.io.File
-import java.io.PrintWriter
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -38,7 +35,7 @@ class StandardMethods (applicationContext: Context){
     )
     var app: Context = applicationContext
 
-    lateinit var viewModelScope: ViewModel
+
 
     val db = Room.databaseBuilder(
         applicationContext,
@@ -168,10 +165,9 @@ class StandardMethods (applicationContext: Context){
     //Cake chart filler for current nett battery capacity
     fun currentnetbattery() {
         val result = CoroutineScope(Dispatchers.IO).async {
-            val writer = PrintWriter("current_health.txt")
             val currentBattery = getBattery().toFloat()
-            if (hcDao.checkexistinghealth() == 1) {
-                val currentHealth = hcDao.getCurrentHealth().toFloat()
+            if (hDao.checkexistinghealth() == 1) {
+                val currentHealth = hDao.getCurrentHealth().toFloat()
                 val end = ((currentHealth / 100) * currentBattery)
             } else {
                 batteryhealthcalucation()
@@ -182,7 +178,7 @@ class StandardMethods (applicationContext: Context){
 
     suspend fun erneuterVersuch(): Float{
         val deffered:Deferred<Float> = MainActivity().lifecycleScope.async{
-            hcDao.getCurrentHealth().toFloat()
+            hDao.getCurrentHealth().toFloat()
         }
         return deffered.await()
     }
@@ -266,16 +262,15 @@ class StandardMethods (applicationContext: Context){
 
     fun batteryhealthcalucation(){
 
-        var cycle = 0.0
         CoroutineScope(Dispatchers.IO).launch{
-
+            var cycle = 0.0
             if(fcsDao.checkExistingFCS(1)==1) {
                 cycle = fcsDao.getFCS(1)
             }
-            if(hcDao.checkexistinghealth() == 1){
-                hcDao.updateHealth(LH(1, hcDao.getCurrentHealth() - (cycle * 0.025)))
+            if(hDao.checkexistinghealth() == 1){
+                hDao.updateHealth(LH(1, hDao.getCurrentHealth() - (cycle * 0.025)))
             } else {
-                hcDao.insertHealth(LH(0,100.0 - (cycle * 0.025)))
+                hDao.insertHealth(LH(0,100.0 - (cycle * 0.025)))
             }
         }
     }
@@ -357,7 +352,7 @@ class StandardMethods (applicationContext: Context){
         setContentText(message).
         setSmallIcon(R.drawable.large_battery_icon)
 
-        var nm = this.app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val nm = this.app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1,b.build())
     }
 }
