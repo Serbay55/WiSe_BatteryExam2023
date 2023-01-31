@@ -16,7 +16,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.Modifier
 
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
