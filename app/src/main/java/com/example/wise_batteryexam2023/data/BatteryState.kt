@@ -6,6 +6,11 @@ import android.content.Context.BATTERY_SERVICE
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.lifecycleScope
+import com.example.wise_batteryexam2023.MainActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 class BatteryState {
@@ -37,11 +42,9 @@ class BatteryState {
 
     fun getBatteryVoltage(context: Context): Int {
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
         return intent?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
     }
-
-
-
 
 
 }
