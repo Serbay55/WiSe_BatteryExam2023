@@ -25,6 +25,9 @@ import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.methods.StandardMethods
 import com.example.wise_batteryexam2023.ui.screens.ChargeScreen
 import com.example.wise_batteryexam2023.ui.theme.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Composable
@@ -36,7 +39,7 @@ fun ChargeScreen(){
     ){
         Column {
             ChargeTopText()
-            CircularChargeBar(percentage = StandardMethods(context).getnetchargecapacity(), number =100 )
+            CircularChargeBar(percentage = StandardMethods(context).getBattery().toFloat()/100, number =100 )
         }
     }
 }

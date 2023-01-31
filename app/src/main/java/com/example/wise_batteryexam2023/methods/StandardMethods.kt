@@ -6,22 +6,22 @@ import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.async
 import androidx.room.Room
 import com.example.wise_batteryexam2023.MainActivity
 import com.example.wise_batteryexam2023.R
 import com.example.wise_batteryexam2023.RunningApps
 import com.example.wise_batteryexam2023.ScreenActivity
 import com.example.wise_batteryexam2023.data.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import java.io.File
+import java.io.PrintWriter
 import java.util.*
 import kotlin.concurrent.schedule
 
 class StandardMethods (applicationContext: Context){
-
     var newcycle: Double = 0.0
     var intervals = arrayOf(
         intArrayOf(10, 0),
@@ -38,7 +38,7 @@ class StandardMethods (applicationContext: Context){
     )
     var app: Context = applicationContext
 
-
+    lateinit var viewModelScope: ViewModel
 
     val db = Room.databaseBuilder(
         applicationContext,
@@ -68,6 +68,10 @@ class StandardMethods (applicationContext: Context){
         applicationContext,
         DB::class.java, "final_charge_stats"
     ).build()
+    val nccdb = Room.databaseBuilder(
+        applicationContext,
+        DB::class.java, "net_charge_capacity"
+    ).build()
     //Dataaccessobject service
     var cDao: CDAO = db.cDAO()
     var scDao: CDAO = sdb.cDAO()
@@ -76,8 +80,9 @@ class StandardMethods (applicationContext: Context){
     var sotDao: CDAO = sotdb.cDAO()
     var lraDao: CDAO = lradb.cDAO()
     var fcsDao: CDAO = fcsdb.cDAO()
+    var nccDao: CDAO = nccdb.cDAO()
     lateinit var bstate : BatteryState
-
+    var discrepancy: Double = 0.0
 
     fun checkForegroundapp(context: Context): String{
         val s: String = RunningApps().getCurrentForegroundRunningApp(context)
@@ -155,32 +160,34 @@ class StandardMethods (applicationContext: Context){
     //calculates based on practical knowledge the estimated time left before next Battery Upgrade
     fun calclifeexpectancy(): Int{
         val life = 800.0
-        val discrepancy: Double = fcsDao.getFCS(1)
+        CoroutineScope(Dispatchers.IO).launch { discrepancy = fcsDao.getFCS(1) }
+        Log.e("discrepancy:: ",""+discrepancy)
         return (life-discrepancy).toInt()
     }
 
     //Cake chart filler for current nett battery capacity
-    fun getnetchargecapacity(): Float {
-        var currentBattery = getBattery().toFloat()
-        var currentHealth: Float = 0.0F
-        var result: Int = 0
-        var finalresult = 0f
-        CoroutineScope(Dispatchers.IO).launch {
+    fun currentnetbattery() {
+        val result = CoroutineScope(Dispatchers.IO).async {
+            val writer = PrintWriter("current_health.txt")
+            val currentBattery = getBattery().toFloat()
             if (hcDao.checkexistinghealth() == 1) {
-                currentHealth = hcDao.getCurrentHealth().toFloat()
-                finalresult = ((currentHealth / 100) * currentBattery)
-                result = 1
+                val currentHealth = hcDao.getCurrentHealth().toFloat()
+                val end = ((currentHealth / 100) * currentBattery)
             } else {
                 batteryhealthcalucation()
-                getnetchargecapacity()
             }
         }
 
-        if(result == 1){
-            return 0.9f
-        }
-        return 0.7f
     }
+
+    suspend fun erneuterVersuch(): Float{
+        val deffered:Deferred<Float> = MainActivity().lifecycleScope.async{
+            hcDao.getCurrentHealth().toFloat()
+        }
+        return deffered.await()
+    }
+
+
 
     fun checkDifference(givenCharge: Int, currentCharge: Int){
 
@@ -199,7 +206,6 @@ class StandardMethods (applicationContext: Context){
         CoroutineScope(Dispatchers.IO).launch {
             val getBat = async {
                 Timer().schedule(10000) {
-                    Log.e("Test","Test")
                     checklastchargestate()
                     checkBatteryCondition()
                     checkVoltageHealth()
@@ -247,7 +253,7 @@ class StandardMethods (applicationContext: Context){
     fun actionHealth(){
         CoroutineScope(Dispatchers.IO).launch {
             val gBHS = async {
-                Timer().schedule(60000*60*24){
+                Timer().schedule(60000*24*60){
                     if(getCurrentDayofMonth() == 1) {
                         batteryhealthcalucation()
                         actionHealth()
@@ -259,6 +265,7 @@ class StandardMethods (applicationContext: Context){
     }
 
     fun batteryhealthcalucation(){
+
         var cycle = 0.0
         CoroutineScope(Dispatchers.IO).launch{
 

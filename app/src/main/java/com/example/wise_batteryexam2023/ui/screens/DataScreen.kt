@@ -25,7 +25,8 @@ fun DataScreen(){
     val yStep = 20
 
     /* to test with fixed points */
-           val points = listOf(100f,96f,89f,69f,34f,98f,95f)
+    //leftest value is the oldest value 7 days ago!
+           val points = listOf(1f,96f,89f,69f,34f,98f,100f)
     Box(
         modifier = Modifier.fillMaxSize().background(DarkPrimary)
     ) {

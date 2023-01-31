@@ -8,18 +8,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.compose.setContent
-
-
-import androidx.compose.ui.Modifier
-
-import android.util.Log
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-
 import androidx.appcompat.app.AppCompatActivity
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import com.example.wise_batteryexam2023.ui.theme.WiSe_BatteryExam2023Theme
@@ -27,6 +16,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
 import android.widget.TextView
+import androidx.compose.ui.platform.LocalContext
 import com.example.wise_batteryexam2023.data.*
 import com.example.wise_batteryexam2023.ui.screens.MainScreen
 import com.example.wise_batteryexam2023.ui.theme.*
@@ -61,6 +51,7 @@ class MainActivity : AppCompatActivity() {
 
 
         val methods: StandardMethods = StandardMethods(this)
+        methods.actionHealth()
         StandardMethods(this).sotcaller(this)
         StandardMethods(this).batteryStatechecker()
         StandardMethods(this).actionHealth()
@@ -117,6 +108,12 @@ class MainActivity : AppCompatActivity() {
             show()
         }
     }
+    @Composable
+    public fun receiveContext(): Context{
+        val context: Context = LocalContext.current
+        return context
+    }
+
 
 
 

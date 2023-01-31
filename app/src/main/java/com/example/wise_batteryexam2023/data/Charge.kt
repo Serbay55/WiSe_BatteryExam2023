@@ -66,3 +66,10 @@ data class FCS(
     @ColumnInfo
     var finalchargecycles: Double,
 )
+@Entity(tableName = "net_charge_capacity")
+data class NCC(
+    @PrimaryKey
+    var id: Int,
+    @ColumnInfo
+    var netchargecapacity: Float
+)

@@ -1,9 +1,14 @@
 package com.example.wise_batteryexam2023.data
 
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao
 interface CDAO {
+
+    @Query("SELECT * FROM current_health")
+    fun getAll(): LiveData<List<LH>>
+
     //Charge Queries
 
     @Insert
@@ -110,5 +115,20 @@ interface CDAO {
     @Query("SELECT COUNT(1) FROM current_health WHERE id = 1")
     fun checkexistinghealth(): Int
 
+    @Query("SELECT * FROM current_health")
+    fun getAllHealth(): LH
+
+    //Net charge capacity
+    @Insert
+    suspend fun insertNCC(ncc: NCC)
+
+    @Update
+    suspend fun updateNCC(ncc: NCC)
+
+    @Query("SELECT netchargecapacity FROM net_charge_capacity WHERE id = 1")
+    fun getNCC(): Float
+
+    @Query("SELECT COUNT(1) FROM net_charge_capacity WHERE id = 1")
+    fun checkNCCexisting(): Int
 
 }

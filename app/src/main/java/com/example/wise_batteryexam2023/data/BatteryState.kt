@@ -9,7 +9,9 @@ import android.os.BatteryManager
 import kotlinx.coroutines.Dispatchers
 import androidx.lifecycle.lifecycleScope
 import com.example.wise_batteryexam2023.MainActivity
+import com.example.wise_batteryexam2023.methods.StandardMethods
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 
@@ -45,6 +47,7 @@ class BatteryState {
 
         return intent?.getIntExtra(android.os.BatteryManager.EXTRA_VOLTAGE, -1) ?: -1
     }
+
 
 
 }
