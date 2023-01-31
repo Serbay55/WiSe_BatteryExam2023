@@ -15,9 +15,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.wise_batteryexam2023.methods.StandardMethods
 import com.example.wise_batteryexam2023.ui.theme.BlueTertiary
 import com.example.wise_batteryexam2023.ui.theme.BrightSecondary
 import com.example.wise_batteryexam2023.ui.theme.DarkPrimary
+import kotlin.coroutines.coroutineContext
 
 /*@Composable
 fun LifeScreen(){

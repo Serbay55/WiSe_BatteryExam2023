@@ -161,15 +161,25 @@ class StandardMethods (applicationContext: Context){
 
     //Cake chart filler for current nett battery capacity
     fun getnetchargecapacity(): Float {
-        val currentBattery = getBattery().toFloat()
-        val currentHealth: Float
-        if(hcDao.checkexistinghealth() == 1){
-            currentHealth = hcDao.getCurrentHealth().toFloat()
-            return ((currentHealth/100) * currentBattery)
-        } else {
-            batteryhealthcalucation()
-            return getnetchargecapacity()
+        var currentBattery = getBattery().toFloat()
+        var currentHealth: Float = 0.0F
+        var result: Int = 0
+        var finalresult = 0f
+        CoroutineScope(Dispatchers.IO).launch {
+            if (hcDao.checkexistinghealth() == 1) {
+                currentHealth = hcDao.getCurrentHealth().toFloat()
+                finalresult = ((currentHealth / 100) * currentBattery)
+                result = 1
+            } else {
+                batteryhealthcalucation()
+                getnetchargecapacity()
+            }
         }
+
+        if(result == 1){
+            return 0.9f
+        }
+        return 0.7f
     }
 
     fun checkDifference(givenCharge: Int, currentCharge: Int){
