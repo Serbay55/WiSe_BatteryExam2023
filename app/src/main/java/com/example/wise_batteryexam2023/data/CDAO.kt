@@ -1,5 +1,6 @@
 package com.example.wise_batteryexam2023.data
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.LiveData
 import androidx.room.*
 

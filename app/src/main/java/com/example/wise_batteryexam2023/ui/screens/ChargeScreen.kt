@@ -40,7 +40,8 @@ fun ChargeScreen(viewmodel: MainViewModel){
     val context = LocalContext.current
     var content: Float = 0f
     val allNCC by viewmodel.allNCC.observeAsState(listOf())
-    for(x in allNCC){
+    val all by remember(viewmodel) {viewmodel.allNCC}.observeAsState(listOf())
+    for(x in all){
         content = x.netchargecapacity.div(100)
     }
     //Unfortunately the List of all net charge states isn't being updated, so allNCC stays at final state

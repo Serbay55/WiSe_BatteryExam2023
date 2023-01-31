@@ -1,5 +1,6 @@
 package com.example.wise_batteryexam2023.repository
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.wise_batteryexam2023.data.CDAO
@@ -7,7 +8,11 @@ import com.example.wise_batteryexam2023.data.Charge
 import com.example.wise_batteryexam2023.data.NCC
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.concurrent.schedule
 
 class ChargeRepository(private val chargeDAO: CDAO) {
     val searchResults = MutableLiveData<List<Charge>>()
@@ -39,8 +44,11 @@ class ChargeRepository(private val chargeDAO: CDAO) {
     }
 
     fun getAll(){
-        coroutineScope.launch(Dispatchers.IO){
-            chargeDAO.getAll()
+        Timer().schedule(5000) {
+            coroutineScope.launch(Dispatchers.IO) {
+                chargeDAO.getAll()
+                getAll()
+            }
         }
     }
 
